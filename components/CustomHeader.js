@@ -14,6 +14,7 @@ const CustomHeader = ({
   backgroundColor = '#00A9FF',
   edgePadding = 15,
   rightOffset = 0,
+
 }) => {
   const [isMenuVisible, setMenuVisible] = useState(false);
   // ===== NOVO ESTADO PARA CONTROLAR O MODAL DE SAÍDA =====

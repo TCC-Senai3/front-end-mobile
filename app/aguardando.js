@@ -1,10 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
 
 export default function Aguardando() {
   const router = useRouter();
+  useEffect(() => {
+    const t = setTimeout(() => {
+      router.replace('/sala');
+    }, 4000);
+    return () => clearTimeout(t);
+  }, [router]);
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />

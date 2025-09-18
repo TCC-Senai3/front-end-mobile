@@ -16,6 +16,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
+import { setPin } from '../store/pinStore';
 
 const { height } = Dimensions.get('window');
 
@@ -25,10 +26,11 @@ export default function GamePinScreen() {
 
   const handleEnter = () => {
     const length = pin.trim().length;
-    if (length < 5 || length > 6) {
-      Alert.alert('PIN inválido', 'Digite um PIN com 5 ou 6 dígitos.');
+    if (length !== 6) {
+      Alert.alert('PIN inválido', 'Você precisa informar exatamente 6 dígitos.');
       return;
     }
+    setPin(pin.trim());
     router.push('/aguardando');
   };
 

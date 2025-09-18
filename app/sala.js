@@ -9,16 +9,26 @@ import {
   StatusBar,
   Dimensions,
 } from 'react-native';
+import { useRouter } from 'expo-router';
+import { getPin, clearPin } from '../store/pinStore';
 
 const { width } = Dimensions.get('window');
 
+// Mock de usuários para exibição na tela
+const MOCK_PLAYERS = Array.from({ length: 6 }, (_, index) => ({
+  id: index + 1,
+  name: 'Usuário',
+}));
+
 export default function Sala() {
+  const router = useRouter();
+  const code = getPin();
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#1CB0FC" />
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.code}>CODE: 804723</Text>
+        <Text style={styles.code}>CODE: {code}</Text>
         <TouchableOpacity style={styles.menuButton}>
           <View style={styles.menuIcon}>
             <View style={styles.menuLine} />
@@ -30,7 +40,13 @@ export default function Sala() {
 
       {/* Card de Ações */}
       <View style={styles.actionCard}>
-        <TouchableOpacity style={styles.desmancharBtn}>
+        <TouchableOpacity
+          style={styles.desmancharBtn}
+          onPress={() => {
+            clearPin();
+            router.replace('/game-pin');
+          }}
+        >
           <Text style={styles.desmancharText}>DESMANCHAR</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.iniciarBtn}>
@@ -40,10 +56,12 @@ export default function Sala() {
 
       {/* Lista de Usuários */}
       <View style={styles.playersGrid}>
-        {[0,1,2,3,4,5].map((i) => (
-          <View style={styles.playerCard} key={i}>
-            <Image source={require('../assets/images/user-profile 1.png')} style={styles.avatar} />
-            <Text style={styles.playerName}>Usuário</Text>
+        {MOCK_PLAYERS.map((player) => (
+          <View style={styles.playerCard} key={player.id}>
+            <View style={styles.avatarWrapper}>
+              <Image source={require('../assets/images/user-profile 1.png')} style={styles.avatar} />
+            </View>
+            <Text style={styles.playerName}>{player.name}</Text>
           </View>
         ))}
       </View>
@@ -153,22 +171,43 @@ const styles = StyleSheet.create({
   playerCard: {
     backgroundColor: '#FFF',
     borderRadius: 10,
-    width: 140,
-    height: 100,
+    width: 156,
+    height: 70,
     marginBottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 10,
-    elevation: 3,
+    elevation: 8,
+    // sombra do card (similar ao SVG)
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+  },
+  avatarWrapper: {
+    position: 'absolute',
+    top: -30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
   },
   avatar: {
     width: 60,
     height: 60,
-    marginBottom: 5,
+    borderRadius: 30,
+    marginBottom: 0,
+    // sombra do avatar
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
   },
   playerName: {
     fontFamily: 'Poppins-SemiBold',
-    fontSize: 12,
+    fontSize: 18,
     color: '#3B3939',
+    marginTop: 10,
+    marginBottom: 0,
   },
 });
