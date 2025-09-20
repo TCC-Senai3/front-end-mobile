@@ -49,26 +49,43 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#00A9FF" />
+<<<<<<< HEAD
       <CustomHeader title="" showMenu={true} showSearch={false} menuPosition="left" />
+=======
+      <CustomHeader title="" showMenu={true} showSearch={true} menuPosition="right" />
+>>>>>>> b93f2826fa3da887672c86b63bbb969be4ef918e
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* HERO com fundo azul e ilustração */}
         <View style={styles.heroWrapper}>
+<<<<<<< HEAD
             <Image
               source={require('../assets/images/hero-illustration.svg')}
               style={[styles.heroImage, { width: width * 0.95, height: (width * 0.95) * (223.03/359) }]}
               resizeMode="contain"
             />
+=======
+          <Image
+            source={require('../assets/images/hero-illustration.png')}
+            style={styles.heroImage}
+            resizeMode="contain"
+          />
+>>>>>>> b93f2826fa3da887672c86b63bbb969be4ef918e
           <View style={styles.heroTexts}>
             <View style={styles.heroTitleRow}>
               <Text style={[styles.heroTitle, styles.heroTitleBold]}>SENAI</Text>
               <Text style={styles.heroTitle}> SKILL–UP</Text>
             </View>
             <Text style={styles.heroSubtitle}>
+<<<<<<< HEAD
               Desafie-se jogando o nosso{'\n'}
               jogo de perguntas exclusivo{'\n'}
               para os cursos do{'\n'}
               <Text style={styles.heroSubtitleBold}>SENAI</Text>
+=======
+              Desafie-se jogando o nosso jogo de perguntas exclusivo
+              {'\n'}para os cursos do <Text style={styles.heroSubtitleBold}>SENAI</Text>
+>>>>>>> b93f2826fa3da887672c86b63bbb969be4ef918e
             </Text>
           </View>
           <Link href="/game-pin" asChild>
