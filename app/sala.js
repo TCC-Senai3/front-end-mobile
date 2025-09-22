@@ -59,7 +59,7 @@ export default function Sala() {
         {MOCK_PLAYERS.map((player) => (
           <View style={styles.playerCard} key={player.id}>
             <View style={styles.avatarWrapper}>
-              <Image source={require('../assets/images/user-profile 1.png')} style={styles.avatar} />
+              <Image source={require('../assets/images/perfil.svg')} style={styles.avatar} />
             </View>
             <Text style={styles.playerName}>{player.name}</Text>
           </View>

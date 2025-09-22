@@ -7,6 +7,7 @@ const Cores = {
   blueBar: '#1CB0FC',
   fundo: '#FFFFFF',
   textoPrincipal: '#000000', 
+  texto: '#626361',
   branco: '#FFFFFF',
   pageTitle: '#000000',
   headerAzul: '#00A9FF'
@@ -27,6 +28,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.05,
     paddingTop: height * 0.03,
     marginBottom: height * 0.01,
+    
   },
   blueBar: {
     width: width * 0.02,
@@ -37,7 +39,7 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: width * 0.05, 
-    fontWeight: 'bold', 
+    fontFamily: 'Inria_Sans-Bold', 
     color: Cores.pageTitle,
   },
   cardContainer: {
@@ -53,17 +55,19 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: width * 0.045,
-    fontWeight: 'bold',
+    fontWeight: 'Poppins-Medium',
     color: Cores.textoPrincipal,
     marginTop: height * 0.02,
     marginBottom: height * 0.005,
   },
   paragraph: {
     fontSize: width * 0.04,
-    color: Cores.textoPrincipal,
+    color: Cores.texto,
     lineHeight: height * 0.03,
     marginBottom: height * 0.015,
+    fontFamily: 'Poppins-Regular',
   },
 });
 
 export default styles;
+

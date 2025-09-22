@@ -3,13 +3,23 @@ import { View, Text, ScrollView } from 'react-native';
 import { Stack } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import styles from '../styles/TermosStyles'; // Importando os estilos
+import styles from '../styles/TermosStyles';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 
 export default function TermosScreen() {
+
+  // --- IMPLEMENTAÇÃO DA FONTE ---
+  const [fontsLoaded] = useFonts({
+    'Inria_Sans-Bold': require('../assets/fonts/Inria_Sans/InriaSans-Bold.ttf'),
+    'Poppins-Regular': require('../assets/fonts/Poppins/Poppins-Regular.ttf'),
+    'Poppins-Medium': require('../assets/fonts/Poppins/Poppins-Medium.ttf'),
+  });// Importando os estilos
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <Stack.Screen options={{ headerShown: false }} />
-      <CustomHeader title="" showMenu={true} menuPosition="right" />
+      <CustomHeader title="" showMenu={true} />
 
       <View style={styles.container}>
         <View style={styles.newTitleContainer}>

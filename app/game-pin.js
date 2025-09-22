@@ -48,7 +48,7 @@ export default function GamePinScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <ImageBackground
-          source={require('../assets/images/imagem-onda-azul.png')}
+          source={require('../assets/images/ondas.svg')}
           style={styles.headerBackground}
           resizeMode="stretch">
           <View style={styles.headerContent}>

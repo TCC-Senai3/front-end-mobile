@@ -37,7 +37,7 @@ const SuporteStyles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: width * 0.055, // Fonte responsiva
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
     color: Cores.pageTitle,
   },
 
@@ -51,11 +51,13 @@ const SuporteStyles = StyleSheet.create({
     color: Cores.textoPrincipal,
     marginBottom: height * 0.03,
     lineHeight: height * 0.025,
+    fontFamily: 'Poppins-Medium',
   },
   inputLabel: {
     fontSize: width * 0.04,
     color: '#000000',
     marginBottom: 5,
+    fontFamily: 'Poppins-Medium',
   },
   input: {
     backgroundColor: Cores.branco,
@@ -68,6 +70,7 @@ const SuporteStyles = StyleSheet.create({
     borderColor: Cores.bordaInput,
     fontSize: width * 0.04,
     color: Cores.textoInput,
+    fontFamily: 'Poppins-Regular',
   },
   textArea: {
     backgroundColor: Cores.branco,
@@ -81,6 +84,7 @@ const SuporteStyles = StyleSheet.create({
     textAlignVertical: 'top',
     fontSize: width * 0.04,
     color: Cores.textoInput,
+    fontFamily: 'Poppins-Regular',
   },
   button: {
     backgroundColor: Cores.primaria,
@@ -95,6 +99,44 @@ const SuporteStyles = StyleSheet.create({
     fontSize: width * 0.045,
     fontWeight: 'bold',
     textAlign: 'center',
+    fontFamily: 'Blinker-Regular',
+  },
+   // --- Estilos do Card de Sucesso Flutuante ---
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Fundo escurecido
+  },
+  successCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 20,
+    paddingHorizontal: 30,
+    borderRadius: 15,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  successCardText: {
+    fontSize: width * 0.05,
+    fontWeight: 'bold',
+    color: '#333',
+    marginLeft: 15,
+  },
+
+  // --- Estilos de Validação ---
+  inputError: {
+    borderColor: '#D32F2F', // Cor vermelha para a borda do input
+  },
+  errorMessage: {
+    color: '#D32F2F',       // Cor vermelha para o texto de erro
+    fontSize: width * 0.035,
+    marginTop: -10,          // Puxa a mensagem para perto do input
+    marginBottom: 10,
   },
 });
 

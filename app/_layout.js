@@ -7,11 +7,11 @@ SplashScreen.preventAutoHideAsync();
 
 export default function Layout() {
   const [fontsLoaded, fontError] = useFonts({
-    'Poppins-Regular': require('../assets/fonts/Poppins-Regular.ttf'),
-    'Poppins-Medium': require('../assets/fonts/Poppins-Medium.ttf'),
-    'Poppins-SemiBold': require('../assets/fonts/Poppins-SemiBold.ttf'),
-    'Poppins-Bold': require('../assets/fonts/Poppins-Bold.ttf'),
-    'Blinker-Bold': require('../assets/fonts/Blinker-Bold.ttf'),
+    'Poppins-Regular': require('../assets/fonts/Poppins/Poppins-Regular.ttf'),
+    'Poppins-Medium': require('../assets/fonts/Poppins/Poppins-Medium.ttf'),
+    'Poppins-SemiBold': require('../assets/fonts/Poppins/Poppins-SemiBold.ttf'),
+    'Poppins-Bold': require('../assets/fonts/Poppins/Poppins-Bold.ttf'),
+    'Blinker-Bold': require('../assets/fonts/Blinker/Blinker-Bold.ttf'),
   });
 
   useEffect(() => {
