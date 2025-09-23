@@ -17,6 +17,10 @@ import { SvgUri } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 
+export const options = {
+  headerShown: false,
+};
+
 export default function HomeScreen() {
   const featureSections = [
     {
@@ -50,7 +54,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#00A9FF" />
       <CustomHeader title="" showMenu={true} showSearch={false} menuPosition="left" />
-      <CustomHeader title="" showMenu={true} showSearch={true} menuPosition="right" />
+      
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* HERO com fundo azul e ilustração */}
@@ -67,13 +71,11 @@ export default function HomeScreen() {
               <Text style={styles.heroTitle}> SKILL–UP</Text>
             </View>
             <Text style={styles.heroSubtitle}>
-              Desafie-se jogando o nosso{'\n'}
-              jogo de perguntas exclusivo{'\n'}
-              para os cursos do{'\n'}
-              <Text style={styles.heroSubtitleBold}>SENAI</Text>
-              Desafie-se jogando o nosso jogo de perguntas exclusivo
-              {'\n'}para os cursos do <Text style={styles.heroSubtitleBold}>SENAI</Text>
-            </Text>
+             Desafie-se jogando o nosso{'\n'}
+             jogo de perguntas exclusivo{'\n'}
+             para os cursos do <Text style={styles.heroSubtitleBold}>SENAI</Text>
+             </Text>
+            
           </View>
           <Link href="/game-pin" asChild>
             <TouchableOpacity style={styles.ctaButton}>

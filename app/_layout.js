@@ -37,7 +37,7 @@ export default function Layout() {
         name="home"
         options={{
           title: 'Home',
-          headerShown: true,
+          headerShown: false,
         }}
       />
       <Stack.Screen

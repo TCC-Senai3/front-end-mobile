@@ -14,7 +14,7 @@ export default function Verified() {
 
       {/* Verified image */}
       <Image
-        source={require('../assets/images/verified.png')}
+        source={require('../assets/images/verified.svg')}
         style={styles.verifiedImage}
         resizeMode="contain"
       />

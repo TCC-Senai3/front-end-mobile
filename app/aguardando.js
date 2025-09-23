@@ -16,7 +16,7 @@ export default function Aguardando() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.container}>
-        <CustomHeader title="" showMenu={true} menuPosition="right" edgePadding={0} rightOffset={160} />
+        <CustomHeader title="" showMenu={true} menuPosition="right" />
 
         <Image source={require('../assets/images/gameboy.svg')} style={styles.illustration} resizeMode="contain" />
 

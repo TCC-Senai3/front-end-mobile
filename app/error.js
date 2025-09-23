@@ -11,7 +11,7 @@ export default function Error() {
         <CustomHeader title="" showMenu={true} menuPosition="right" edgePadding={0} rightOffset={160} />
 
       <Image
-        source={require('../assets/images/cancel.png')}
+        source={require('../assets/images/cancel.svg')}
         style={styles.cancelImage}
         resizeMode="contain"
       />

@@ -95,13 +95,13 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   headerBackground: {
-    width: '100%',
-    height: 320,
-    alignItems: 'center',
+    width: 700,
+    height: 500,
+    alignItems: 'flex-start',
     justifyContent: 'center',
-    marginTop: 0,
-    paddingTop: 0,
-    overflow: 'hidden',
+    marginTop: -100,
+    paddingTop: 42,
+    marginLeft: -0,
   },
   headerContent: {
     alignItems: 'center',
@@ -174,6 +174,4 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textTransform: 'uppercase',
   },
-  // Remover estilos:
-  // bottomNav, navButtonPlaceholder
 });
