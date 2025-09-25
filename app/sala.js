@@ -49,19 +49,25 @@ export default function Sala() {
         >
           <Text style={styles.desmancharText}>DESMANCHAR</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iniciarBtn}>
-          <Text style={styles.iniciarText}>INICIAR</Text>
-        </TouchableOpacity>
+        <View style={{ flex: 1, alignItems: 'flex-end' }}>
+          <TouchableOpacity style={styles.iniciarBtn}>
+            <Text style={styles.iniciarText}>INICIAR</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Lista de Usuários */}
-      <View style={styles.playersGrid}>
-        {MOCK_PLAYERS.map((player) => (
-          <View style={styles.playerCard} key={player.id}>
-            <View style={styles.avatarWrapper}>
-              <Image source={require('../assets/images/perfil.svg')} style={styles.avatar} />
-            </View>
-            <Text style={styles.playerName}>{player.name}</Text>
+      <View style={{ width: 330, marginTop: 40 }}>
+        {[0, 1, 2].map((rowIdx) => (
+          <View key={rowIdx} style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 20 }}>
+            {MOCK_PLAYERS.slice(rowIdx * 2, rowIdx * 2 + 2).map((player) => (
+              <View style={styles.playerCard} key={player.id}>
+                <View style={styles.avatarWrapper}>
+                  <Image source={require('../assets/images/perfil.svg')} style={styles.avatar} />
+                </View>
+                <Text style={styles.playerName}>{player.name}</Text>
+              </View>
+            ))}
           </View>
         ))}
       </View>

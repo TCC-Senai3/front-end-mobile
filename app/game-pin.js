@@ -30,7 +30,9 @@ export default function GamePinScreen() {
       Alert.alert('PIN inválido', 'Você precisa informar exatamente 6 dígitos.');
       return;
     }
-    setPin(pin.trim());
+    setPin(pin.trim()); // Atualiza o estado local
+    // Salva o PIN globalmente
+    require('../store/pinStore').setPin(pin.trim());
     router.push('/aguardando');
   };
 
