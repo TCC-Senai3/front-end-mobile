@@ -37,12 +37,35 @@ const CustomHeader = ({
 
   return (
     <>
-      <SafeAreaView style={styles.header}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <View style={styles.headerSide} />
-          <View style={styles.headerCenter} />
+      <SafeAreaView style={{ backgroundColor: '#00A9FF' }}>
+        <View style={styles.header}>
+          {/* ===============================================================
+            ATUALIZAÇÃO: Lógica para a posição do ícone CORRIGIDA
+            ===============================================================
+          */}
+          {/* LADO ESQUERDO */}
           <View style={styles.headerSide}>
-            {showMenu && (
+            {showBackButton && (
+              <TouchableOpacity onPress={() => router.back()}>
+                <Feather name="arrow-left" size={28} color="white" />
+              </TouchableOpacity>
+            )}
+            {/* Menu aparece na esquerda se não houver botão de voltar E a posição for 'left' */}
+            {!showBackButton && showMenu && menuPosition === 'left' && (
+              <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
+                <Feather name="menu" size={28} color="white" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* CENTRO: Título */}
+          <View style={styles.headerCenter}>
+          </View>
+
+          {/* LADO DIREITO */}
+          <View style={styles.headerSide}>
+            {/* Menu aparece na direita se a posição for 'right' */}
+            {showMenu && menuPosition === 'right' && (
               <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
                 <Feather name="menu" size={28} color="white" />
               </TouchableOpacity>
@@ -135,18 +158,15 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#00A9FF',
     height: 60,
-    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 15,
   },
-  headerSide: { flex: 0, width: 60, alignItems: 'flex-end', justifyContent: 'center' },
+  headerSide: { width: 40, alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flex: 1, alignItems: 'center' },
   headerTitle: { color: '#fff', fontSize: 20, fontFamily : 'Poppins-regular' },
-  menuButton: {
-    marginRight: 10,
-  },
+  menuButton: {},
   modalOverlay: { 
     flex: 1, 
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
