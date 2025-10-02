@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, SafeAreaView, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, SafeAreaView, Dimensions, Image, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
@@ -11,7 +11,8 @@ const CustomHeader = ({
   showMenu = false,
   showBackButton = false,
   userName = "Usuário",
-  menuPosition = 'left',
+  menuPosition = 'left', // Padrão: menu abre da esquerda
+  closeButtonSide = 'right', // Padrão: 'x' fica na direita
 }) => {
   const [isMenuVisible, setMenuVisible] = useState(false);
   const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
@@ -21,60 +22,45 @@ const CustomHeader = ({
   const handleLogoutPress = () => { setMenuVisible(false); setLogoutModalVisible(true); };
   const handleConfirmLogout = () => { setLogoutModalVisible(false); router.replace('/'); };
 
-   const [fontsLoaded] = useFonts({
-      'Poppins-Regular': require('../assets/fonts/Poppins/Poppins-Regular.ttf'),
-      'Poppins-Bold': require('../assets/fonts/Poppins/Poppins-Bold.ttf'),
-      'Blinker-Regular': require('../assets/fonts/Blinker/Blinker-Regular.ttf'),
-  
-  
-    });
-  
+  const [fontsLoaded] = useFonts({
+    'Poppins-Regular': require('../assets/fonts/Poppins/Poppins-Regular.ttf'),
+    'Poppins-Bold': require('../assets/fonts/Poppins/Poppins-Bold.ttf'),
+    'Blinker-Regular': require('../assets/fonts/Blinker/Blinker-Regular.ttf'),
+  });
+
   const menuItems = [
-    { name: 'Início', path: '/' },  { name: 'Termos', path: '/termos' },{ name: 'Contato', path: '/contato' },
+    { name: 'Início', path: '/home' }, { name: 'Termos', path: '/termos' },{ name: 'Contato', path: '/contato' },
     { name: 'Minha Conta', path: '/minha-conta' },{ name: 'Usuario', path: '/usuario' },
- { name: 'Sair' },
+    { name: 'Sair' },
   ];
 
   return (
     <>
       <SafeAreaView style={{ backgroundColor: '#00A9FF' }}>
         <View style={styles.header}>
-          {/* ===============================================================
-            ATUALIZAÇÃO: Lógica para a posição do ícone CORRIGIDA
-            ===============================================================
-          */}
-          {/* LADO ESQUERDO */}
-          <View style={styles.headerSide}>
-            {showBackButton && (
-              <TouchableOpacity onPress={() => router.back()}>
-                <Feather name="arrow-left" size={28} color="white" />
-              </TouchableOpacity>
-            )}
-            {/* Menu aparece na esquerda se não houver botão de voltar E a posição for 'left' */}
-            {!showBackButton && showMenu && menuPosition === 'left' && (
-              <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
-                <Feather name="menu" size={28} color="white" />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* CENTRO: Título */}
-          <View style={styles.headerCenter}>
-          </View>
-
-          {/* LADO DIREITO */}
-          <View style={styles.headerSide}>
-            {/* Menu aparece na direita se a posição for 'right' */}
-            {showMenu && menuPosition === 'right' && (
-              <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
-                <Feather name="menu" size={28} color="white" />
-              </TouchableOpacity>
-            )}
-          </View>
+            <View style={styles.headerSide}>
+              {showBackButton && (
+                <TouchableOpacity onPress={() => router.back()}>
+                  <Feather name="arrow-left" size={28} color="white" />
+                </TouchableOpacity>
+              )}
+              {!showBackButton && showMenu && menuPosition === 'left' && (
+                <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
+                  <Feather name="menu" size={28} color="white" />
+                </TouchableOpacity>
+              )}
+            </View>
+            <View style={styles.headerCenter}></View>
+            <View style={styles.headerSide}>
+              {showMenu && menuPosition === 'right' && (
+                <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
+                  <Feather name="menu" size={28} color="white" />
+                </TouchableOpacity>
+              )}
+            </View>
         </View>
       </SafeAreaView>
 
-      {/* Modal do Menu Lateral (código existente, sem alterações) */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -82,17 +68,27 @@ const CustomHeader = ({
         onRequestClose={() => setMenuVisible(false)}
       >
         <TouchableOpacity 
-          style={[styles.modalOverlay, menuPosition === 'right' && styles.modalOverlayRight]} 
+          style={[
+            styles.modalOverlay,
+            menuPosition === 'right' && styles.modalOverlayRight
+          ]}
           activeOpacity={1} 
           onPressOut={() => setMenuVisible(false)}
         >
           <View style={styles.menuCard}>
             <SafeAreaView style={{ flex: 1 }}>
-                <TouchableOpacity style={styles.closeButton} onPress={() => setMenuVisible(false)}>
+                <TouchableOpacity 
+                  style={[
+                    styles.closeButtonBase,
+                    closeButtonSide === 'left' ? styles.closeButtonLeft : styles.closeButtonRight
+                  ]} 
+                  onPress={() => setMenuVisible(false)}
+                >
                   <Feather name="x" size={30} color="black" />
                 </TouchableOpacity>
-                <View style={styles.menuPerfil}>
-                  <View style={styles.menuframe}>
+                
+                <View style={[styles.menuPerfil, menuPosition === 'right' && styles.menuPerfilRight]}>
+                  <View style={[styles.menuframe, menuPosition === 'right' && styles.menuframeRight]}>
                     <Image source={require('../assets/images/perfil.svg')} style={styles.profileImage} />
                     <Text style={styles.menuUserName}>{userName}</Text>
                   </View>
@@ -101,23 +97,23 @@ const CustomHeader = ({
                       <Text style={styles.pontuacao}>0</Text>
                   </View>
                 </View>
+
                 <View style={styles.menuItemsContainer}>
                   {menuItems.map((item, index) => (
-                    <TouchableOpacity 
+                    <Pressable 
                       key={index} 
-                      style={styles.menuItem} 
+                      style={({ hovered }) => [styles.menuItem, hovered && styles.menuItemHover]} 
                       onPress={() => item.name === 'Sair' ? handleLogoutPress() : navigateAndClose(item.path)}
                     >
-                      <Text style={styles.menuItemText}>{item.name}</Text>
-                    </TouchableOpacity>
+                      <Text style={[styles.menuItemText, menuPosition === 'right' && styles.menuItemTextRight]}>{item.name}</Text>
+                    </Pressable>
                   ))}
                 </View>
             </SafeAreaView>
           </View>
         </TouchableOpacity>
       </Modal>
-
-      {/* Modal de Confirmação de Saída (código existente, sem alterações) */}
+      
       <Modal
         animationType="fade"
         transparent={true}
@@ -165,7 +161,6 @@ const styles = StyleSheet.create({
   },
   headerSide: { width: 40, alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { color: '#fff', fontSize: 20, fontFamily : 'Poppins-regular' },
   menuButton: {},
   modalOverlay: { 
     flex: 1, 
@@ -182,12 +177,14 @@ const styles = StyleSheet.create({
     height: '100%',
     elevation: 10,
   },
-  closeButton: {
+  closeButtonBase: {
     position: 'absolute',
     top: height * 0.02,
-    right: width * 0.05,
     zIndex: 1,
   },
+  closeButtonLeft: { left: width * 0.05, },
+  closeButtonRight: { right: width * 0.05, },
+
   menuPerfil: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -196,6 +193,9 @@ const styles = StyleSheet.create({
     marginTop: height * 0.06,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  menuPerfilRight: {
+    flexDirection: 'row-reverse',
   },
   menuframe: {
     flex: 1,
@@ -207,17 +207,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.02,
     marginRight: width * 0.04,
   },
+  menuframeRight: {
+    flexDirection: 'row-reverse',
+    marginRight: 0,
+    marginLeft: width * 0.04,
+  },
   profileImage: {
     width: height * 0.055,
     height: height * 0.055,
     borderRadius: (height * 0.055) / 2,
-    marginRight: width * 0.02,
   },
   menuUserName: {
     fontSize: width * 0.04,
     fontFamily : 'Blinker-Regular',
     color: '#fff',
     flex: 1,
+    marginHorizontal: width * 0.02,
   },
   scoreContainer: {
     flexDirection: 'row',
@@ -238,10 +243,19 @@ const styles = StyleSheet.create({
   },
   menuItem: {
     paddingVertical: height * 0.025, 
+    borderRadius: 8,
+    paddingHorizontal: 10,
+  },
+  menuItemHover: {
+    backgroundColor: 'rgba(0, 144, 255, 0.8)',
   },
   menuItemText: {
     fontSize: width * 0.045,
     color: '#FFFFFF',
+    textAlign: 'left',
+  },
+  menuItemTextRight: {
+    textAlign: 'right',
   },
   logoutModalOverlay: {
     flex: 1,
@@ -276,7 +290,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '65%',
-
   },
   confirmButton: {
     backgroundColor: '#D32F2F',
@@ -293,6 +306,5 @@ const styles = StyleSheet.create({
     fontSize: width * 0.04,
   },
 });
-
 
 export default CustomHeader;

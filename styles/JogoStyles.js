@@ -58,12 +58,12 @@ const styles = StyleSheet.create({
     appTitleSenai: {
         color: Cores.branco,
         fontFamily: 'Blinker-ExtraBold',
-        fontSize: width * 0.15, // Responsivo
+        fontSize: width * 0.15,
     },
     appTitleSkillUp: {
         color: Cores.branco,
         fontFamily: 'Blinker-Regular',
-        fontSize: width * 0.15, // Responsivo
+        fontSize: width * 0.15,
         marginTop: -height * 0.040
     },
     carouselArea: {
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
         marginTop: 5
     },
     cardTitle: {
-        fontSize: width * 0.05, // Responsivo
+        fontSize: width * 0.05,
         fontFamily: 'Poppins-Bold',
         color: Cores.cardTexto,
         textAlign: 'center'
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
         color: Cores.cardPrivadaTexto
     },
     cardSubtitle: {
-        fontSize: width * 0.03, // Responsivo
+        fontSize: width * 0.03,
         color: Cores.cardTexto,
         textAlign: 'center',
         marginTop: 5,
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     },
     cardButtonText: {
         color: Cores.branco,
-        fontSize: width * 0.07, // Responsivo
+        fontSize: width * 0.07,
         fontFamily: 'Blinker-Bold',
         textAlign: 'center'
     },
@@ -235,22 +235,25 @@ const styles = StyleSheet.create({
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Cores.branco,
-        borderRadius: 50,
-        paddingHorizontal: 20,
         marginHorizontal: '5%',
         marginBottom: 20,
-        elevation: 3,
     },
     searchInput: {
         flex: 1,
-        height: 50, // Responsivo (altura consistente)
-        fontSize: width * 0.04, // Responsivo
-        fontFamily: 'Poppins-Regular'
+        height: 50,
+        fontSize: width * 0.04,
+        fontFamily: 'Poppins-Regular',
+        backgroundColor: Cores.branco,
+        borderRadius: 50,
+        paddingHorizontal: 20,
+        elevation: 3,
+        paddingRight: 50,
     },
     searchIcon: {
-        width: width * 0.06, // Responsivo
-        height: width * 0.06, // Responsivo
+        width: width * 0.06,
+        height: width * 0.06,
+        position: 'absolute',
+        right: 20,
     },
     listContainer: {
         paddingHorizontal: '5%',
@@ -274,8 +277,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center'
     },
     rankImage: {
-        width: width * 0.08, // Responsivo
-        height: width * 0.08, // Responsivo
+        width: width * 0.08,
+        height: width * 0.08,
         resizeMode: 'contain'
     },
     rankNumber: {
@@ -358,8 +361,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#ffff',
     },
     quizCardImage: {
-        width: width * 0.18, // Responsivo
-        height: width * 0.18, // Responsivo
+        width: width * 0.18,
+        height: width * 0.18,
         borderRadius: 10,
         marginRight: 15,
         backgroundColor: '#E0E0E0',

@@ -38,8 +38,11 @@ export default function JogoScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <Stack.Screen options={{ headerShown: false }} />
-      <CustomHeader title="Jogo" showMenu={true} menuPosition="right" />
-
+<CustomHeader 
+        showMenu={true} 
+        menuPosition="right" 
+        closeButtonSide="left" 
+      />
       <ScrollView>
         <JogoSection />
 
