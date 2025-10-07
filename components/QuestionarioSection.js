@@ -1,38 +1,26 @@
 // components/QuestionarioSection.js
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TextInput, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, ScrollView, TouchableOpacity } from 'react-native';
 import styles from '../styles/JogoStyles';
+import QuestionariosBannerIcon from '../components/icons/QuestionariosBannerIcon';
+import BuscaIcon from '../components/icons/BuscaIcon';
+import QuizCardIcon from '../components/icons/QuizCardIcon';
 
-// Dados de exemplo com as cores, para que tudo funcione
+// Dados de exemplo
 const quizzesData = [
-    { 
-      id: '1', 
-      title: 'Hardware',
-      description: '10 Questões | Valendo 100 Pontos',
-    },
-    { 
-      id: '2', 
-      title: 'Software',
-      description: '10 Questões | Valendo 100 Pontos',
-    },
-    { 
-      id: '3', 
-      title: 'Redes',
-      description: '10 Questões | Valendo 100 Pontos',
-    },
-    { 
-      id: '4', 
-      title: 'Segurança',
-      description: '10 Questões | Valendo 100 Pontos',
-    },
+    { id: '1', title: 'Hardware', description: '10 Questões | Valendo 100 Pontos' },
+    { id: '2', title: 'Software', description: '10 Questões | Valendo 100 Pontos' },
+    { id: '3', title: 'Redes', description: '10 Questões | Valendo 100 Pontos' },
+    { id: '4', title: 'Segurança', description: '10 Questões | Valendo 100 Pontos' },
+    { id: '5', title: 'Backend', description: '10 Questões | Valendo 100 Pontos' },
+    { id: '6', title: 'Frontend', description: '10 Questões | Valendo 100 Pontos' },
 ];
 
 export default function QuestionarioSection() {
   const [searchText, setSearchText] = useState('');
   const [filteredQuizzes, setFilteredQuizzes] = useState(quizzesData);
 
-  // Efeito que filtra a lista sempre que o texto da pesquisa muda
   useEffect(() => {
     if (searchText) {
       const newData = quizzesData.filter(item => {
@@ -42,18 +30,13 @@ export default function QuestionarioSection() {
       });
       setFilteredQuizzes(newData);
     } else {
-      // Se a pesquisa estiver vazia, mostra a lista completa
       setFilteredQuizzes(quizzesData);
     }
   }, [searchText]);
   
   return (
     <View style={styles.questionarioFrame}>
-      <Image
-        source={require('../assets/images/Questionarios.svg')}
-        style={styles.quizTitleBanner}
-        resizeMode="contain"
-      />
+      <QuestionariosBannerIcon style={styles.quizTitleBanner} />
       
       <View style={styles.searchContainer}>
         <TextInput
@@ -61,44 +44,44 @@ export default function QuestionarioSection() {
           placeholder="Pesquisar questionário..."
           placeholderTextColor="#888"
           value={searchText}
-          onChangeText={setSearchText} // Conectado ao state
+          onChangeText={setSearchText}
         />
-        <Image 
-            source={require('../assets/images/busca.svg')}
-            style={styles.searchIcon} 
-        />
+        <BuscaIcon style={styles.searchIcon} />
       </View>
 
-      {/* Verifica se a lista de resultados está vazia */}
-      {filteredQuizzes.length > 0 ? (
-        <ScrollView style={styles.quizListContainer}>
-          {/* A lista agora usa os dados filtrados */}
-          {filteredQuizzes.map((quiz) => (
-            <View key={quiz.id} style={[styles.quizCard]}>
-              <Image
-                  source={require('../assets/images/Rectangle 81.svg')}
-                  style={styles.quizCardImage}
-              />
-              <View style={styles.quizCardTextContainer}>
-                <Text style={[styles.quizCardTitle]}>
-                  {quiz.title}
-                </Text>
-                <Text style={[styles.quizCardDescription]}>
-                  {quiz.description}
-                </Text>
-                 <TouchableOpacity style={[styles.quizCardButton]}>
-                    <Text style={styles.quizCardButtonText}>Iniciar</Text>
-                </TouchableOpacity>
+      {/* Usamos a View com flex: 1 para garantir o espaço correto */}
+      <View style={{ flex: 1 }}>
+        {filteredQuizzes.length > 0 ? (
+          // E adicionamos a propriedade nestedScrollEnabled={true} aqui
+          <ScrollView 
+            style={styles.quizListContainer} 
+            nestedScrollEnabled={true}
+          >
+            {filteredQuizzes.map((quiz) => (
+              <View key={quiz.id} style={[styles.quizCard]}>
+                <QuizCardIcon
+                    style={styles.quizCardImage}
+                />
+                <View style={styles.quizCardTextContainer}>
+                  <Text style={[styles.quizCardTitle]}>
+                    {quiz.title}
+                  </Text>
+                  <Text style={[styles.quizCardDescription]}>
+                    {quiz.description}
+                  </Text>
+                    <TouchableOpacity style={[styles.quizCardButton]}>
+                        <Text style={styles.quizCardButtonText}>Iniciar</Text>
+                    </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          ))}
-        </ScrollView>
-      ) : (
-        <View style={styles.searchEmptyContainer}>
-          <Text style={styles.searchEmptyText}>Nenhum questionário encontrado</Text>
-        </View>
-      )}
-
+            ))}
+          </ScrollView>
+        ) : (
+          <View style={styles.searchEmptyContainer}>
+            <Text style={styles.searchEmptyText}>Nenhum questionário encontrado</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 }

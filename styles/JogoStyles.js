@@ -47,12 +47,13 @@ const styles = StyleSheet.create({
     },
     waveImage: {
         width: '100%',
+        height: height * 0.50,
         position: 'absolute',
         bottom: '20%',
     },
     appTitleContainer: {
         alignItems: 'center',
-        marginTop: -height * 0.15,
+        marginTop: -height * 0.20,
         zIndex: 1
     },
     appTitleSenai: {
@@ -64,11 +65,11 @@ const styles = StyleSheet.create({
         color: Cores.branco,
         fontFamily: 'Blinker-Regular',
         fontSize: width * 0.15,
-        marginTop: -height * 0.040
+        marginTop: -height * 0.025
     },
     carouselArea: {
         backgroundColor: Cores.fundo,
-        marginTop: -height * 0.1,
+        marginTop: -height * 0.08,
         position: 'relative',
         height: height * 0.5,
         justifyContent: 'center'
@@ -82,7 +83,7 @@ const styles = StyleSheet.create({
         height: height * 0.35,
         borderRadius: 20,
         marginHorizontal: (width - width * 0.75) / 2,
-        padding: 15,
+        padding: 20,
         justifyContent: 'space-between',
         alignItems: 'center',
         borderTopLeftRadius: 30,
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
         marginTop: 5
     },
     cardTitle: {
-        fontSize: width * 0.05,
+        fontSize: width * 0.045,
         fontFamily: 'Poppins-Bold',
         color: Cores.cardTexto,
         textAlign: 'center'
@@ -110,33 +111,30 @@ const styles = StyleSheet.create({
         color: Cores.cardPrivadaTexto
     },
     cardSubtitle: {
-        fontSize: width * 0.03,
+        fontSize: width * 0.030,
         color: Cores.cardTexto,
         textAlign: 'center',
         marginTop: 5,
-        lineHeight: width * 0.045,
+        lineHeight: width * 0.035,
         fontFamily: 'Poppins-Medium'
     },
     cardPrivadaSubtitle: {
         color: Cores.cardPrivadaTexto
     },
     cardIconImage: {
-        width: width * 0.15,
-        height: width * 0.15,
+        width: 62,
+        height: 62,
         resizeMode: 'contain',
-        marginVertical: 5
     },
     cardMedalImage: {
-        width: width * 0.15,
-        height: width * 0.15,
+        width: width * 0.20,
+        height: width * 0.20,
         resizeMode: 'contain',
-        marginVertical: 5
     },
     cardLivrosImage: {
-        width: width * 0.15,
-        height: width * 0.15,
+        width: width * 0.20,
+        height: width * 0.20,
         resizeMode: 'contain',
-        marginVertical: 5
     },
     cardButton: {
         backgroundColor: Cores.azulBotao,
@@ -180,10 +178,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         backgroundColor: Cores.fundo,
-        paddingVertical: 15,
+        paddingVertical: 50,
         borderBottomWidth: 1,
         borderBottomColor: '#E0E0E0',
         gap: 20,
+
     },
     tabButton: {
         paddingVertical: 10,
@@ -215,22 +214,22 @@ const styles = StyleSheet.create({
         marginTop: 40,
         borderRadius: 20,
         backgroundColor: Cores.fundoRanking,
-        paddingTop: 45,
+        paddingTop: 50,
         paddingBottom: 20,
-        paddingHorizontal: 20,
+        paddingHorizontal: 15,
         elevation: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
         shadowRadius: 10,
-        height: 550,
+        height: height * 0.65, // <-- ALTURA FIXA RESTAURADA
     },
     bannerImage: {
         width: width * 0.7,
         height: 90,
         alignSelf: 'center',
         position: 'absolute',
-        top: -40,
+        top: -43,
     },
     searchContainer: {
         flexDirection: 'row',
@@ -336,16 +335,15 @@ const styles = StyleSheet.create({
         elevation: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
         shadowRadius: 10,
-        height: 550,
+        height: height * 0.65, // <-- ALTURA FIXA RESTAURADA
     },
     quizTitleBanner: {
         width: width * 0.7,
         height: 90,
         alignSelf: 'center',
         position: 'absolute',
-        top: -40,
+        top: -43,
     },
     quizListContainer: {
         flex: 1,
@@ -355,9 +353,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         borderRadius: 15,
-        padding: 20,
+        padding: 15,
         marginBottom: 15,
-        minHeight: 85,
+        marginHeight: 85,
         backgroundColor: '#ffff',
     },
     quizCardImage: {

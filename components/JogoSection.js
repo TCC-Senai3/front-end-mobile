@@ -4,12 +4,17 @@ import React, { useState, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import styles from '../styles/JogoStyles'; // Usaremos o novo estilo unificado
+import MedalhaIcon from '../components/icons/MedalhaIcon';
+import OndasIcon from '../components/icons/OndasIcon';
+import AddIcon from '../components/icons/AddIcon';
+import LivroIcon from '../components/icons/LivroIcon';
+
 
 const { width } = Dimensions.get('window');
 
 const cardData = [
   { title: 'CRIAR SALA', subtitle: 'Crie uma sala para você e seus amigos', type: 'criar-sala', buttonText: 'CRIAR' },
-  { title: 'RANQUEADO', subtitle: 'Jogue contra outros jogadores em busca do topo do rank', type: 'ranqueado', buttonText: 'PLAY' },
+  { title: 'RANQUEADO', subtitle: 'Jogue contra outros jogadores em busca do topo do ranking', type: 'ranqueado', buttonText: 'PLAY' },
   { title: 'SALA PRIVADA', subtitle: 'Divirta-se com seus colegas de classe', type: 'sala-privada', buttonText: 'ENTRAR' },
 ];
 
@@ -37,7 +42,7 @@ export default function JogoSection() {
     // Esta View substitui o <View style={styles.container}> do seu código original
     <View> 
         <View style={styles.waveContainer}>
-            <Image source={require('../assets/images/ondas.svg')} style={styles.waveImage} />
+            <OndasIcon style={styles.waveImage} />
             <View style={styles.appTitleContainer}>
                 <Text style={styles.appTitleSenai}>SENAI</Text>
                 <Text style={styles.appTitleSkillUp}>SKILL UP</Text>
@@ -64,9 +69,9 @@ export default function JogoSection() {
                             <Text style={[styles.cardTitle, card.type === 'sala-privada' && styles.cardPrivadaTitle]}>{card.title}</Text>
                             <Text style={[styles.cardSubtitle, card.type === 'sala-privada' && styles.cardPrivadaSubtitle]}>{card.subtitle}</Text>
                         </View>
-                        {card.type === 'criar-sala' && (<Image source={require('../assets/images/add.svg')} style={styles.cardIconImage} />)}
-                        {card.type === 'ranqueado' && (<Image source={require('../assets/images/medalha.svg')} style={styles.cardMedalImage} />)}
-                        {card.type === 'sala-privada' && (<Image source={require('../assets/images/Livro.svg')} style={styles.cardLivrosImage} />)}
+                          {card.type === 'criar-sala' && (<AddIcon style={styles.cardIconImage} />)}
+                        {card.type === 'ranqueado' && (<MedalhaIcon style={styles.cardMedalImage} />)}
+                        {card.type === 'sala-privada' && (<LivroIcon style={styles.cardLivrosImage} />)}
                         <TouchableOpacity style={[styles.cardButton, card.type === 'ranqueado' && styles.buttonRanqueado, card.type === 'sala-privada' && styles.buttonPrivada]}>
                             <Text style={styles.cardButtonText}>{card.buttonText}</Text>
                         </TouchableOpacity>

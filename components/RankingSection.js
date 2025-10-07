@@ -3,6 +3,13 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TextInput, Image } from 'react-native';
 import styles from '../styles/JogoStyles';
+import Trofeu1Icon from '../components/icons/Trofeu1Icon';
+import Trofeu2Icon from '../components/icons/Trofeu2Icon';
+import Trofeu3Icon from '../components/icons/Trofeu3Icon';
+import PerfilIcon from '../components/icons/PerfilIcon';
+import MedalhamenuIcon from '../components/icons/MedalhamenuIcon';
+import RankingBannerIcon from '../components/icons/RankingBannerIcon';
+import BuscaIcon from '../components/icons/BuscaIcon';
 
 
 const rankingData = [
@@ -38,19 +45,19 @@ export default function RankingSection() {
 
   const renderUserCard = (item) => {
     const getRankComponent = () => {
-      if (item.rank === 1) return <Image source={require('../assets/images/troféu1.svg')} style={styles.rankImage} />;
-      if (item.rank === 2) return <Image source={require('../assets/images/troféu2.svg')} style={styles.rankImage} />;
-      if (item.rank === 3) return <Image source={require('../assets/images/troféu3.svg')} style={styles.rankImage} />;
+      if (item.rank === 1) return <Trofeu1Icon style={styles.rankImage} />;
+      if (item.rank === 2) return <Trofeu2Icon style={styles.rankImage} />;
+      if (item.rank === 3) return <Trofeu3Icon style={styles.rankImage} />;
       return <Text style={styles.rankNumber}>{item.rank}</Text>;
     };
 
     return (
       <View key={item.id} style={styles.userCard}>
         <View style={styles.rankContainer}>{getRankComponent()}</View>
-        <Image source={require('../assets/images/perfil.svg')} style={styles.avatar} />
+        <PerfilIcon style={styles.avatar} />
         <Text style={styles.userName}>{item.name}</Text>
         <View style={styles.scoreContainer}>
-            <Image source={require('../assets/images/medalha.svg')} style={styles.scoreIcon} />
+            <MedalhamenuIcon style={styles.scoreIcon} />
             <Text style={styles.scoreText}>{item.score}</Text>
         </View>
       </View>
@@ -59,7 +66,7 @@ export default function RankingSection() {
 
   return (
     <View style={styles.rankingFrame}>
-      <Image source={require('../assets/images/ranking.svg')} style={styles.bannerImage} />
+      <RankingBannerIcon style={styles.bannerImage} />
       <View style={styles.searchContainer}>
         <TextInput 
           style={styles.searchInput} 
@@ -68,7 +75,7 @@ export default function RankingSection() {
           value={searchText}
           onChangeText={handleSearch}
         />
-        <Image source={require('../assets/images/busca.svg')} style={styles.searchIcon} />
+        <BuscaIcon style={styles.searchIcon} />
       </View>
       
       <View style={styles.listContainer}>

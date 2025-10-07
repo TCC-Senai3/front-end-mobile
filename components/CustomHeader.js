@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import MedalhamenuIcon from '../components/icons/MedalhamenuIcon'
+import PerfilIcon from '../components/icons/PerfilIcon';
 
 const { width, height } = Dimensions.get('window');
 
@@ -11,8 +13,8 @@ const CustomHeader = ({
   showMenu = false,
   showBackButton = false,
   userName = "Usuário",
-  menuPosition = 'left', // Padrão: menu abre da esquerda
-  closeButtonSide = 'right', // Padrão: 'x' fica na direita
+  menuPosition = 'left',
+  closeButtonSide = 'right',
 }) => {
   const [isMenuVisible, setMenuVisible] = useState(false);
   const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
@@ -29,8 +31,8 @@ const CustomHeader = ({
   });
 
   const menuItems = [
-    { name: 'Início', path: '/home' }, { name: 'Termos', path: '/termos' },{ name: 'Contato', path: '/contato' },
-    { name: 'Minha Conta', path: '/minha-conta' },{ name: 'Usuario', path: '/usuario' },
+    { name: 'Início', path: '/' }, { name: 'Termos', path: '/termos' },{ name: 'Contato', path: '/contato' },
+    { name: 'Minha Conta', path: '/' },{ name: 'Usuario', path: '/' },
     { name: 'Sair' },
   ];
 
@@ -41,12 +43,12 @@ const CustomHeader = ({
             <View style={styles.headerSide}>
               {showBackButton && (
                 <TouchableOpacity onPress={() => router.back()}>
-                  <Feather name="arrow-left" size={28} color="white" />
+                  <Feather name="arrow-left" size={width * 0.07} color="white" />
                 </TouchableOpacity>
               )}
               {!showBackButton && showMenu && menuPosition === 'left' && (
                 <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
-                  <Feather name="menu" size={28} color="white" />
+                  <Feather name="menu" size={width * 0.07} color="white" />
                 </TouchableOpacity>
               )}
             </View>
@@ -54,7 +56,7 @@ const CustomHeader = ({
             <View style={styles.headerSide}>
               {showMenu && menuPosition === 'right' && (
                 <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
-                  <Feather name="menu" size={28} color="white" />
+                  <Feather name="menu" size={width * 0.07} color="white" />
                 </TouchableOpacity>
               )}
             </View>
@@ -84,16 +86,16 @@ const CustomHeader = ({
                   ]} 
                   onPress={() => setMenuVisible(false)}
                 >
-                  <Feather name="x" size={30} color="black" />
+                  <Feather name="x" size={width * 0.08} color="black" />
                 </TouchableOpacity>
                 
                 <View style={[styles.menuPerfil, menuPosition === 'right' && styles.menuPerfilRight]}>
                   <View style={[styles.menuframe, menuPosition === 'right' && styles.menuframeRight]}>
-                    <Image source={require('../assets/images/perfil.svg')} style={styles.profileImage} />
+                    <PerfilIcon style={styles.profileImage} />
                     <Text style={styles.menuUserName}>{userName}</Text>
                   </View>
                   <View style={styles.scoreContainer}>
-                      <Image source={require('../assets/images/medalha.svg')} style={styles.medalImage} />
+                    <MedalhamenuIcon style={styles.medalImage} />
                       <Text style={styles.pontuacao}>0</Text>
                   </View>
                 </View>
@@ -126,7 +128,7 @@ const CustomHeader = ({
                 style={styles.logoutCloseButton}
                 onPress={() => setLogoutModalVisible(false)}
               >
-                <Feather name="x" size={24} color="#888" />
+                <Feather name="x" size={width * 0.06} color="#888" />
               </TouchableOpacity>
               <Text style={styles.logoutModalText}>Deseja mesmo sair da conta?</Text>
               <View style={styles.logoutModalButtons}>
@@ -153,15 +155,27 @@ const CustomHeader = ({
 const styles = StyleSheet.create({
   header: {
     backgroundColor: '#00A9FF',
-    height: 60,
+    height: height * 0.1, // Responsivo
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
+    paddingHorizontal: width * 0.04, // Responsivo
   },
-  headerSide: { width: 40, alignItems: 'center', justifyContent: 'center' },
-  headerCenter: { flex: 1, alignItems: 'center' },
-  menuButton: {},
+  headerSide: { 
+    width: width * 0.1, // Responsivo
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  headerCenter: { 
+    flex: 1, 
+    alignItems: 'center' 
+  },
+  menuButton: {
+    height: width * 0.1, // Responsivo
+    width: width * 0.1,  // Responsivo
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
   modalOverlay: { 
     flex: 1, 
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -173,7 +187,7 @@ const styles = StyleSheet.create({
   },
   menuCard: {
     backgroundColor: '#00ABFF',
-    width: width * 0.6,
+    width: width * 0.7,
     height: '100%',
     elevation: 10,
   },
@@ -182,9 +196,12 @@ const styles = StyleSheet.create({
     top: height * 0.02,
     zIndex: 1,
   },
-  closeButtonLeft: { left: width * 0.05, },
-  closeButtonRight: { right: width * 0.05, },
-
+  closeButtonLeft: { 
+    left: width * 0.05, 
+  },
+  closeButtonRight: { 
+    right: width * 0.05, 
+  },
   menuPerfil: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -200,7 +217,7 @@ const styles = StyleSheet.create({
   menuframe: {
     flex: 1,
     height: height * 0.07,
-    borderRadius: 100,
+    borderRadius: 100, // Raio grande para garantir a forma de pílula
     backgroundColor: '#0090FF',
     flexDirection: 'row',
     alignItems: 'center',
@@ -213,12 +230,12 @@ const styles = StyleSheet.create({
     marginLeft: width * 0.04,
   },
   profileImage: {
-    width: height * 0.055,
-    height: height * 0.055,
-    borderRadius: (height * 0.055) / 2,
+    width: height * 0.050,
+    height: height * 0.050,
+    borderRadius: (height * 0.055) / 2, // Garante que a imagem seja um círculo perfeito
   },
   menuUserName: {
-    fontSize: width * 0.04,
+    fontSize: width * 0.05,
     fontFamily : 'Blinker-Regular',
     color: '#fff',
     flex: 1,
@@ -243,8 +260,8 @@ const styles = StyleSheet.create({
   },
   menuItem: {
     paddingVertical: height * 0.025, 
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    borderRadius: width * 0.02, // Responsivo
+    paddingHorizontal: width * 0.025, // Responsivo
   },
   menuItemHover: {
     backgroundColor: 'rgba(0, 144, 255, 0.8)',
@@ -264,26 +281,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoutModalCard: {
-    width: '80%',
-    maxWidth: 320,
+    width: '90%',
+    maxWidth: 320, // Manter um maxWidth é uma boa prática
     backgroundColor: '#FFF',
-    borderRadius: 10,
-    padding: 20,
+    borderRadius: width * 0.03, // Responsivo
+    padding: width * 0.08, // Responsivo
     alignItems: 'center',
     elevation: 10,
   },
   logoutCloseButton: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: height * 0.01, // Responsivo
+    right: width * 0.03, // Responsivo
     backgroundColor: '#4e4747',
-    borderRadius: 15,
+    borderRadius: width * 0.04, // Responsivo
+    padding: width * 0.01, // Para dar um pequeno espaço ao 'x'
   },
   logoutModalText: {
     fontSize: width * 0.045,
     fontFamily: 'Poppins-Bold',
     textAlign: 'center',
-    marginVertical: 20,
+    marginVertical: height * 0.02, // Responsivo
     color: '#333',
   },
   logoutModalButtons: {
@@ -295,8 +313,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#D32F2F',
     position: 'center',
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 6,
+    paddingVertical: height * 0.015, // Responsivo
+    borderRadius: width * 0.02, // Responsivo
     alignItems: 'center',
     justifyContent: 'center',
   },
