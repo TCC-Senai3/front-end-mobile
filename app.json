@@ -4,7 +4,7 @@
     "slug": "SenaiSkillUp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/medalha.png",
+    "icon": "./assets/icon.png",
     "scheme": "senaiskillup",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/medalha.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -22,15 +22,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/medalha.png"
+      "favicon": "./assets/icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/hero-illustration.png",
-          "imageWidth": 200,
+          "image": "./assets/splash.png",
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
@@ -44,6 +43,7 @@
       "eas": {
         "projectId": "564c92f1-0250-4b89-816b-c59825b00e33"
       }
-    }
+    },
+    "owner": "leycon"
   }
 }
