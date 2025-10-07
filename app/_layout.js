@@ -89,6 +89,13 @@ export default function Layout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="perfil"
+        options={{
+          title: 'Perfil',
+          headerShown: false,
+        }}
+      />
       {/* Adicione outras telas do SkillUpMobile aqui, se necessário */}
     </Stack>
   );
