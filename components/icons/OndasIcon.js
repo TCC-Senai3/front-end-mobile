@@ -4,10 +4,12 @@ const SvgComponent = (props) => (
   <Svg
     xmlns="http://www.w3.org/2000/svg"
     xmlnsXlink="http://www.w3.org/1999/xlink"
+    width={506}
+    height={540}
     fill="none"
     {...props}
   >
-    <Path fill="url(#a)" d="M0 0h390v416H0z" />
+    <Path fill="url(#a)" d="M0 0h506v539.733H0z" />
     <Defs>
       <Pattern
         id="a"

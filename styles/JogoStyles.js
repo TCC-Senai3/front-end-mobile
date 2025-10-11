@@ -39,15 +39,15 @@ const styles = StyleSheet.create({
     // --- Estilos da Seção de Jogo ---
     // ==========================================
     waveContainer: {
-        height: height * 0.5,
+        height: height * 0.50,
         width: '100%',
-        backgroundColor: '#ffff',
+        backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
     },
     waveImage: {
         width: '100%',
-        height: height * 0.50,
+        height: '100%',
         position: 'absolute',
         bottom: '20%',
     },

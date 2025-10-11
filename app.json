@@ -44,6 +44,12 @@
         "projectId": "564c92f1-0250-4b89-816b-c59825b00e33"
       }
     },
-    "owner": "leycon"
+    "owner": "leycon",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/564c92f1-0250-4b89-816b-c59825b00e33"
+    }
   }
 }
