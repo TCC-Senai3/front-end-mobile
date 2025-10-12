@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     },
     searchInput: {
         flex: 1,
-        height: 50,
+        height: 60,
         fontSize: width * 0.04,
         fontFamily: 'Poppins-Regular',
         backgroundColor: Cores.branco,
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     },
     userName: {
         flex: 1,
-        fontSize: width * 0.045,
+        fontSize: width * 0.040,
         fontFamily: 'Poppins-Regular'
     },
     scoreContainer: {
@@ -357,13 +357,6 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         marginHeight: 85,
         backgroundColor: '#ffff',
-    },
-    quizCardImage: {
-        width: width * 0.18,
-        height: width * 0.18,
-        borderRadius: 10,
-        marginRight: 15,
-        backgroundColor: '#E0E0E0',
     },
     quizCardTextContainer: {
         flex: 1,

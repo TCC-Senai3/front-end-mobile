@@ -5,7 +5,8 @@ import { View, Text, TextInput, ScrollView, TouchableOpacity } from 'react-nativ
 import styles from '../styles/JogoStyles';
 import QuestionariosBannerIcon from '../components/icons/QuestionariosBannerIcon';
 import BuscaIcon from '../components/icons/BuscaIcon';
-import QuizCardIcon from '../components/icons/QuizCardIcon';
+// O QuizCardIcon não é mais necessário aqui, já que a imagem foi removida do seu layout original
+// import QuizCardIcon from '../components/icons/QuizCardIcon'; 
 
 // Dados de exemplo
 const quizzesData = [
@@ -34,6 +35,14 @@ export default function QuestionarioSection() {
     }
   }, [searchText]);
   
+  // Função que será chamada ao clicar no card
+  const handleStartQuiz = (quizTitle) => {
+    // AQUI você adicionará a lógica para navegar para a tela do quiz
+    console.log(`Iniciando o quiz: ${quizTitle}`);
+    // Exemplo de como seria com navegação (você precisará do hook useNavigation):
+    // navigation.navigate('TelaDoQuiz', { quizId: quiz.id });
+  };
+
   return (
     <View style={styles.questionarioFrame}>
       <QuestionariosBannerIcon style={styles.quizTitleBanner} />
@@ -49,19 +58,21 @@ export default function QuestionarioSection() {
         <BuscaIcon style={styles.searchIcon} />
       </View>
 
-      {/* Usamos a View com flex: 1 para garantir o espaço correto */}
       <View style={{ flex: 1 }}>
         {filteredQuizzes.length > 0 ? (
-          // E adicionamos a propriedade nestedScrollEnabled={true} aqui
           <ScrollView 
             style={styles.quizListContainer} 
             nestedScrollEnabled={true}
           >
             {filteredQuizzes.map((quiz) => (
-              <View key={quiz.id} style={[styles.quizCard]}>
-                <QuizCardIcon
-                    style={styles.quizCardImage}
-                />
+              // --- ALTERAÇÃO AQUI ---
+              // O <View> virou um <TouchableOpacity>
+              <TouchableOpacity 
+                key={quiz.id} 
+                style={[styles.quizCard]}
+                onPress={() => handleStartQuiz(quiz.title)} // Ação de clique adicionada
+                activeOpacity={0.7} // Efeito visual ao clicar
+              >
                 <View style={styles.quizCardTextContainer}>
                   <Text style={[styles.quizCardTitle]}>
                     {quiz.title}
@@ -69,11 +80,8 @@ export default function QuestionarioSection() {
                   <Text style={[styles.quizCardDescription]}>
                     {quiz.description}
                   </Text>
-                    <TouchableOpacity style={[styles.quizCardButton]}>
-                        <Text style={styles.quizCardButtonText}>Iniciar</Text>
-                    </TouchableOpacity>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         ) : (
