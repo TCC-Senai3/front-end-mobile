@@ -10,23 +10,21 @@ export default function Verified() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.screenContainer}>
-        <CustomHeader title="" showMenu={true} menuPosition="right" edgePadding={0} rightOffset={160} />
+        <CustomHeader title="" showMenu={true} menuPosition="right" />
+        <View style={styles.content}>
+          <Image
+            source={require('../assets/images/verified.svg')}
+            style={styles.verifiedImage}
+            resizeMode="contain"
+          />
 
-      {/* Verified image */}
-      <Image
-        source={require('../assets/images/verified.svg')}
-        style={styles.verifiedImage}
-        resizeMode="contain"
-      />
-
-      {/* Text "CORRETO!" */}
-      <Text style={styles.correctText}>CORRETO!</Text>
-
-      {/* Home bar */}
-      <View style={styles.homeBarWrapper}>
-        <View style={styles.homeBar} />
-      </View>
-    </SafeAreaView>
+          <Text style={styles.correctText}>CORRETO!</Text>
+        </View>
+        {/* Home bar */}
+        <View style={styles.homeBarWrapper}>
+          <View style={styles.homeBar} />
+        </View>
+      </SafeAreaView>
     </>
   );
 }
@@ -35,11 +33,10 @@ const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
     backgroundColor: '#1CB0FC',
-    alignItems: 'center',
     justifyContent: 'flex-start',
   },
   verifiedImage: {
-    marginTop: 160,
+    marginTop: -40, // igual ao erro
     width: 200,
     height: 200,
     shadowColor: '#000',
@@ -73,5 +70,10 @@ const styles = StyleSheet.create({
     height: 5,
     backgroundColor: '#000000',
     borderRadius: 3,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

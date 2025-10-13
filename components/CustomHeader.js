@@ -38,28 +38,26 @@ const CustomHeader = ({
 
   return (
     <>
-      <SafeAreaView style={{ backgroundColor: '#00A9FF' }}>
+      <SafeAreaView>
         <View style={styles.header}>
-            <View style={styles.headerSide}>
-              {showBackButton && (
-                <TouchableOpacity onPress={() => router.back()}>
-                  <Feather name="arrow-left" size={width * 0.07} color="white" />
-                </TouchableOpacity>
-              )}
-              {!showBackButton && showMenu && menuPosition === 'left' && (
-                <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
-                  <Feather name="menu" size={width * 0.07} color="white" />
-                </TouchableOpacity>
-              )}
-            </View>
-            <View style={styles.headerCenter}></View>
-            <View style={styles.headerSide}>
-              {showMenu && menuPosition === 'right' && (
-                <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
-                  <Feather name="menu" size={width * 0.07} color="white" />
-                </TouchableOpacity>
-              )}
-            </View>
+          {showBackButton && (
+            <TouchableOpacity onPress={() => router.back()}>
+              <Feather name="arrow-left" size={width * 0.07} color="white" />
+            </TouchableOpacity>
+          )}
+          {!showBackButton && showMenu && menuPosition === 'left' && (
+            <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
+              <Feather name="menu" size={width * 0.07} color="white" />
+            </TouchableOpacity>
+          )}
+          
+          <View style={styles.headerCenter}></View>
+          
+          {showMenu && menuPosition === 'right' && (
+            <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
+              <Feather name="menu" size={width * 0.07} color="white" />
+            </TouchableOpacity>
+          )}
         </View>
       </SafeAreaView>
 
@@ -89,8 +87,8 @@ const CustomHeader = ({
                   <Feather name="x" size={width * 0.08} color="black" />
                 </TouchableOpacity>
                 
-                <View style={[styles.menuPerfil, menuPosition === 'right' && styles.menuPerfilRight]}>
-                  <View style={[styles.menuframe, menuPosition === 'right' && styles.menuframeRight]}>
+                <View style={styles.menuPerfil}>
+                  <View style={styles.menuframe}>
                     <PerfilIcon style={styles.profileImage} />
                     <Text style={styles.menuUserName}>{userName}</Text>
                   </View>
@@ -154,17 +152,11 @@ const CustomHeader = ({
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#00A9FF',
     height: height * 0.1, // Responsivo
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: width * 0.04, // Responsivo
-  },
-  headerSide: { 
-    width: width * 0.1, // Responsivo
-    alignItems: 'center', 
-    justifyContent: 'center' 
   },
   headerCenter: { 
     flex: 1, 
@@ -173,7 +165,7 @@ const styles = StyleSheet.create({
   menuButton: {
     height: width * 0.1, // Responsivo
     width: width * 0.1,  // Responsivo
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   modalOverlay: { 

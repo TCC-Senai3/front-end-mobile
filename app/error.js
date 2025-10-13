@@ -8,18 +8,18 @@ export default function Error() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.screenContainer}>
-        <CustomHeader title="" showMenu={true} menuPosition="right" edgePadding={0} rightOffset={160} />
+        <CustomHeader title="" showMenu={true} menuPosition="right" />
+        <View style={styles.content}>
+          <Image
+            source={require('../assets/images/cancel.svg')}
+            style={styles.cancelImage}
+            resizeMode="contain"
+          />
 
-      <Image
-        source={require('../assets/images/cancel.svg')}
-        style={styles.cancelImage}
-        resizeMode="contain"
-      />
-
-      <Text style={styles.errorText}>ERRADO!</Text>
-
-      <View style={styles.homeIndicator} />
-    </SafeAreaView>
+          <Text style={styles.errorText}>ERRADO!</Text>
+        </View>
+        <View style={styles.homeIndicator} />
+      </SafeAreaView>
     </>
   );
 }
@@ -28,13 +28,12 @@ const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
     backgroundColor: '#00A9FF',
-    alignItems: 'center',
     paddingTop: 0,
   },
   cancelImage: {
     width: 200,
     height: 200,
-    marginTop: 160,
+    marginTop: -65,
     marginBottom: 24,
     shadowColor: '#000',
     shadowOpacity: 0.15,
@@ -57,5 +56,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     borderRadius: 100,
     alignSelf: 'center',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
