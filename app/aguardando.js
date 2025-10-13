@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Image, Dimensions, Modal } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Dimensions, Modal } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { SvgUri } from 'react-native-svg';
-import { Asset } from 'expo-asset';
 import { Feather } from '@expo/vector-icons';
 import { getPin } from '../store/pinStore';
+import GameboyIcon from '../components/icons/GameboyIcon';
 
 const { width, height } = Dimensions.get('window');
 
 export default function Aguardando() {
   const router = useRouter();
-  const [illustrationUri, setIllustrationUri] = useState(null);
   const [isMenuVisible, setMenuVisible] = useState(false);
   const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
   const code = getPin();
@@ -28,12 +26,6 @@ export default function Aguardando() {
     }, 4000);
     return () => clearTimeout(t);
   }, [router]);
-  useEffect(() => {
-    const asset = Asset.fromModule(require('../assets/images/gameboy.svg'));
-    if (asset.localUri || asset.uri) {
-      setIllustrationUri(asset.localUri || asset.uri);
-    }
-  }, []);
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -121,11 +113,7 @@ export default function Aguardando() {
           </View>
         </Modal>
 
-        {illustrationUri ? (
-          <SvgUri uri={illustrationUri} width={320} height={320} />
-        ) : (
-          <View style={styles.illustrationPlaceholder} />
-        )}
+        <GameboyIcon style={styles.illustration} />
 
         <Text style={styles.title}>Aguardando o host da Sala</Text>
 
