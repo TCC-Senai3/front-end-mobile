@@ -4,8 +4,7 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import MedalhamenuIcon from '../components/icons/MedalhamenuIcon'
-import PerfilIcon from '../components/icons/PerfilIcon';
+import { MedalhamenuIcon, PerfilIcon } from './icons/icon';
 
 const { width, height } = Dimensions.get('window');
 
@@ -178,10 +177,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   menuCard: {
-    backgroundColor: '#00ABFF',
+    backgroundColor: '#FFFFFF',
     width: width * 0.7,
     height: '100%',
     elevation: 10,
+    borderWidth: 2,
+    borderColor: '#00ABFF',
   },
   closeButtonBase: {
     position: 'absolute',
@@ -229,7 +230,7 @@ const styles = StyleSheet.create({
   menuUserName: {
     fontSize: width * 0.05,
     fontFamily : 'Blinker-Regular',
-    color: '#fff',
+    color: '#000000',
     flex: 1,
     marginHorizontal: width * 0.02,
   },
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: width * 0.045,
-    color: '#FFFFFF',
+    color: '#000000',
     textAlign: 'left',
   },
   menuItemTextRight: {

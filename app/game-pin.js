@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
 import { setPin } from '../store/pinStore';
+import { OndasIcon } from '../components/icons/icon';
 
 const { height } = Dimensions.get('window');
 
@@ -49,15 +50,7 @@ export default function GamePinScreen() {
         contentContainerStyle={styles.scrollContentContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <ImageBackground
-          source={require('../assets/images/ondas.svg')}
-          style={styles.headerBackground}
-          resizeMode="stretch">
-          <View style={styles.headerContent}>
-            <Text style={styles.logoTextSenai}>SENAI</Text>
-            <Text style={styles.logoTextSkillUp}>SKILL UP</Text>
-          </View>
-        </ImageBackground>
+        <View style={styles.headerBackground}><OndasIcon width={700} height={500} /></View>
 
         <View style={styles.cardContainer}>
           <View style={styles.card}>

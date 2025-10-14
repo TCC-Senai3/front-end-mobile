@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
-import { SvgUri } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 
@@ -37,7 +36,7 @@ export default function HomeScreen() {
     },
     {
       icon: { uri: 'https://c.animaapp.com/mesh3yq5uHbvsH/img/question-1.svg' },
-      isSvg: true,
+      
       title: 'Proposito',
       description:
         'A proposta do nosso projeto é criar um jogo online interativo que visa transformar o processo de aprendizagem em uma experiência mais divertida, dinâmica e envolvente.',
@@ -59,12 +58,8 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* HERO com fundo azul e ilustração */}
         <View style={styles.heroWrapper}>
-            <Image
-              source={require('../assets/images/hero-illustration.svg')}
-              style={[styles.heroImage, { width: width * 0.95, height: (width * 0.95) * (223.03/359) }]}
-              resizeMode="contain"
-            
-          />
+            {/* TODO: Criar HeroIllustrationIcon! */}
+            {/* <HeroIllustrationIcon style={[styles.heroImage, { width: width * 0.95, height: (width * 0.95) * (223.03/359) }]} /> */}
           <View style={styles.heroTexts}>
             <View style={styles.heroTitleRow}>
               <Text style={[styles.heroTitle, styles.heroTitleBold]}>SENAI</Text>
@@ -89,7 +84,7 @@ export default function HomeScreen() {
           {featureSections.map((s, idx) => (
             <View key={idx} style={styles.sectionCard}>
               {s.isSvg ? (
-                <SvgUri uri={s.icon.uri} width={68} height={68} />
+                <Image source={s.icon} style={styles.sectionIcon} />
               ) : (
                 <Image source={s.icon} style={styles.sectionIcon} />
               )}

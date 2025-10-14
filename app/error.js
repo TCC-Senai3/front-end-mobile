@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image } from 'react-native';
 import { Stack } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
+import { CancelIcon } from '../components/icons/icon';
 
 export default function Error() {
   return (
@@ -10,11 +11,8 @@ export default function Error() {
       <SafeAreaView style={styles.screenContainer}>
         <CustomHeader title="" showMenu={true} menuPosition="right" />
         <View style={styles.content}>
-          <Image
-            source={require('../assets/images/cancel.svg')}
-            style={styles.cancelImage}
-            resizeMode="contain"
-          />
+          {/* Ícone de erro */}
+          <CancelIcon style={styles.cancelImage} width={200} height={200} />
 
           <Text style={styles.errorText}>ERRADO!</Text>
         </View>

@@ -12,11 +12,8 @@ export default function Verified() {
       <SafeAreaView style={styles.screenContainer}>
         <CustomHeader title="" showMenu={true} menuPosition="right" />
         <View style={styles.content}>
-          <Image
-            source={require('../assets/images/verified.svg')}
-            style={styles.verifiedImage}
-            resizeMode="contain"
-          />
+          {/* TODO: Criar VerifiedIcon! */}
+          {/* <VerifiedIcon style={styles.verifiedImage} width={200} height={200} /> */}
 
           <Text style={styles.correctText}>CORRETO!</Text>
         </View>

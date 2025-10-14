@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { getPin } from '../store/pinStore';
-import GameboyIcon from '../components/icons/GameboyIcon';
+import { GameboyIcon } from '../components/icons/icon';
 import CustomHeader from '../components/CustomHeader';
 
 const { width, height } = Dimensions.get('window');

@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity } from 'react-native';
 import styles from '../styles/JogoStyles';
-import QuestionariosBannerIcon from '../components/icons/QuestionariosBannerIcon';
-import BuscaIcon from '../components/icons/BuscaIcon';
+import { QuestionariosBannerIcon, BuscaIcon } from './icons/icon';
 // O QuizCardIcon não é mais necessário aqui, já que a imagem foi removida do seu layout original
 // import QuizCardIcon from '../components/icons/QuizCardIcon'; 
 

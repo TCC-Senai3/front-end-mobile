@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { getPin, clearPin } from '../store/pinStore';
 import CustomHeader from '../components/CustomHeader';
+import { PerfilIcon } from '../components/icons/icon';
 
 const { width, height } = Dimensions.get('window');
 
@@ -58,7 +59,7 @@ export default function Sala() {
               {MOCK_PLAYERS.slice(rowIdx * 2, rowIdx * 2 + 2).map((player) => (
                 <View style={styles.playerCard} key={player.id}>
                   <View style={styles.avatarWrapper}>
-                    <Image source={require('../assets/images/perfil.svg')} style={styles.avatar} />
+                    <PerfilIcon style={styles.avatar} width={60} height={60} />
                   </View>
                   <Text style={styles.playerName}>{player.name}</Text>
                 </View>

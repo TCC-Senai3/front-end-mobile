@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Dimensions, ScrollView, ImageBackground } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { PerfilIcon, MedalhaIcon, RankingIcon } from '../components/icons/icon';
 
 const { width } = Dimensions.get('window');
 
@@ -23,13 +24,11 @@ export default function PerfilScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerRow}>
           <View style={{ width: 28 }} />
-          <ImageBackground
-            source={require('../assets/images/placa.svg')}
-            style={styles.badgeImage}
-            resizeMode="contain"
-          >
+          {/* PlacaIcon não existe, comentário placeholder:
+          <PlacaIcon style={styles.badgeImage} width={350} height={50} /> */}
+          
             <Text style={styles.badgeText}></Text>
-          </ImageBackground>
+          
           <View style={styles.headerSpacerRight}>
             <TouchableOpacity onPress={() => router.back()}>
               <Text style={styles.closeIcon}>×</Text>
@@ -40,11 +39,8 @@ export default function PerfilScreen() {
         <View style={styles.card}>
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarCircle}>
-              {/* Placeholder do avatar */}
-              <Image
-                source={require('../assets/images/perfil.svg')}
-                style={styles.avatarImage}
-              />
+              {/* Avatar do perfil (ícone) */}
+              <PerfilIcon style={styles.avatarImage} width={70} height={70} />
               <View style={styles.statusDot} />
             </View>
             <Text style={styles.name}>{profile.name}</Text>
@@ -54,14 +50,16 @@ export default function PerfilScreen() {
           <View style={styles.gridRow}>
             <View style={styles.gridCard}>
               <View style={styles.gridHeader}>
-                <Image source={require('../assets/images/ranking.svg')} style={styles.gridIcon} />
+                {/* Ícones da grid: */}
+                <RankingIcon style={styles.gridIcon} width={20} height={20} />
                 <Text style={styles.gridTitle}>POSIÇÃO NO RANKING</Text>
               </View>
               <Text style={styles.gridValue}>{profile.rankPosition}</Text>
             </View>
             <View style={styles.gridCard}>
               <View style={styles.gridHeader}>
-                <Image source={require('../assets/images/medalha.svg')} style={styles.gridIcon} />
+                {/* Ícones da grid: */}
+                <MedalhaIcon style={styles.gridIcon} width={20} height={20} />
                 <Text style={styles.gridTitle}>PONTOS</Text>
               </View>
               <Text style={styles.gridValue}>{`${profile.points}`.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1 ')}</Text>
@@ -72,7 +70,8 @@ export default function PerfilScreen() {
             <View style={styles.gridCardWide}>
               <Text style={styles.sectionLabel}>TAG#</Text>
               <View style={styles.tagRow}>
-                <Image source={require('../assets/images/ranking.svg')} style={styles.smallIcon} />
+                {/* Ícones da grid: */}
+                <RankingIcon style={styles.smallIcon} width={18} height={18} />
                 <Text style={styles.tagText}>{profile.tag}</Text>
               </View>
             </View>

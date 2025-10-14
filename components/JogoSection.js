@@ -4,10 +4,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import styles from '../styles/JogoStyles'; // Usaremos o novo estilo unificado
-import MedalhaIcon from '../components/icons/MedalhaIcon';
-import OndasIcon from '../components/icons/OndasIcon';
-import AddIcon from '../components/icons/AddIcon';
-import LivroIcon from '../components/icons/LivroIcon';
+import { MedalhaIcon, OndasIcon, AddIcon, LivroIcon } from './icons/icon';
 
 
 const { width } = Dimensions.get('window');
