@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { MedalhamenuIcon, PerfilIcon } from './icons/icon';
+import MedalhamenuIcon from '../components/icons/MedalhamenuIcon'
+import PerfilIcon from '../components/icons/PerfilIcon';
 
 const { width, height } = Dimensions.get('window');
 
@@ -37,26 +38,28 @@ const CustomHeader = ({
 
   return (
     <>
-      <SafeAreaView>
+      <SafeAreaView style={{ backgroundColor: '#00A9FF' }}>
         <View style={styles.header}>
-          {showBackButton && (
-            <TouchableOpacity onPress={() => router.back()}>
-              <Feather name="arrow-left" size={width * 0.07} color="white" />
-            </TouchableOpacity>
-          )}
-          {!showBackButton && showMenu && menuPosition === 'left' && (
-            <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
-              <Feather name="menu" size={width * 0.07} color="white" />
-            </TouchableOpacity>
-          )}
-          
-          <View style={styles.headerCenter}></View>
-          
-          {showMenu && menuPosition === 'right' && (
-            <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
-              <Feather name="menu" size={width * 0.07} color="white" />
-            </TouchableOpacity>
-          )}
+            <View style={styles.headerSide}>
+              {showBackButton && (
+                <TouchableOpacity onPress={() => router.back()}>
+                  <Feather name="arrow-left" size={width * 0.07} color="white" />
+                </TouchableOpacity>
+              )}
+              {!showBackButton && showMenu && menuPosition === 'left' && (
+                <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
+                  <Feather name="menu" size={width * 0.07} color="white" />
+                </TouchableOpacity>
+              )}
+            </View>
+            <View style={styles.headerCenter}></View>
+            <View style={styles.headerSide}>
+              {showMenu && menuPosition === 'right' && (
+                <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
+                  <Feather name="menu" size={width * 0.07} color="white" />
+                </TouchableOpacity>
+              )}
+            </View>
         </View>
       </SafeAreaView>
 
@@ -86,8 +89,8 @@ const CustomHeader = ({
                   <Feather name="x" size={width * 0.08} color="black" />
                 </TouchableOpacity>
                 
-                <View style={styles.menuPerfil}>
-                  <View style={styles.menuframe}>
+                <View style={[styles.menuPerfil, menuPosition === 'right' && styles.menuPerfilRight]}>
+                  <View style={[styles.menuframe, menuPosition === 'right' && styles.menuframeRight]}>
                     <PerfilIcon style={styles.profileImage} />
                     <Text style={styles.menuUserName}>{userName}</Text>
                   </View>
@@ -151,11 +154,17 @@ const CustomHeader = ({
 
 const styles = StyleSheet.create({
   header: {
+    backgroundColor: '#00A9FF',
     height: height * 0.1, // Responsivo
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: width * 0.04, // Responsivo
+  },
+  headerSide: { 
+    width: width * 0.1, // Responsivo
+    alignItems: 'center', 
+    justifyContent: 'center' 
   },
   headerCenter: { 
     flex: 1, 
@@ -164,7 +173,7 @@ const styles = StyleSheet.create({
   menuButton: {
     height: width * 0.1, // Responsivo
     width: width * 0.1,  // Responsivo
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
   },
   modalOverlay: { 
@@ -177,12 +186,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   menuCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#00ABFF',
     width: width * 0.7,
     height: '100%',
     elevation: 10,
-    borderWidth: 2,
-    borderColor: '#00ABFF',
   },
   closeButtonBase: {
     position: 'absolute',
@@ -230,7 +237,7 @@ const styles = StyleSheet.create({
   menuUserName: {
     fontSize: width * 0.05,
     fontFamily : 'Blinker-Regular',
-    color: '#000000',
+    color: '#fff',
     flex: 1,
     marginHorizontal: width * 0.02,
   },
@@ -261,7 +268,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: width * 0.045,
-    color: '#000000',
+    color: '#FFFFFF',
     textAlign: 'left',
   },
   menuItemTextRight: {

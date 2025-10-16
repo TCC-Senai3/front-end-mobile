@@ -10,6 +10,8 @@ export default function App() {
       <Link href="/suporte" style={styles.link}>Suporte</Link>
       <Link href="/termos" style={styles.link}>Termos</Link>
      <Link href="/jogo" style={styles.link}>jogo</Link>
+      <Link href="/Redefinicao-Senha" style={styles.link}>nova-Senha</Link>
+      <Link href="/Recuperacao-Email" style={styles.link}>Recuperação-Email</Link>
       <Link href="/home" style={styles.link}>home</Link>
       <Link href="/perfil" style={styles.link}>perfil</Link>
       <Link href="/sala" style={styles.link}>sala</Link>
