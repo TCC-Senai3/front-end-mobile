@@ -12,6 +12,7 @@ export default function App() {
      <Link href="/jogo" style={styles.link}>jogo</Link>
       <Link href="/Redefinicao-Senha" style={styles.link}>nova-Senha</Link>
       <Link href="/Recuperacao-Email" style={styles.link}>Recuperação-Email</Link>
+            <Link href="/Sem-Conexao" style={styles.link}>Sem-Conexão</Link>
       <Link href="/home" style={styles.link}>home</Link>
       <Link href="/perfil" style={styles.link}>perfil</Link>
       <Link href="/sala" style={styles.link}>sala</Link>

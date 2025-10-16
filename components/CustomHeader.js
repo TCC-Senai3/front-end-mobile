@@ -1,9 +1,10 @@
+// components/CustomHeader.js
+
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, SafeAreaView, Dimensions, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, SafeAreaView, Dimensions, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
 import MedalhamenuIcon from '../components/icons/MedalhamenuIcon'
 import PerfilIcon from '../components/icons/PerfilIcon';
 
@@ -15,6 +16,7 @@ const CustomHeader = ({
   userName = "Usuário",
   menuPosition = 'left',
   closeButtonSide = 'right',
+  headerStyle = 'solid', // 'solid' (com fundo) ou 'floating' (só o ícone)
 }) => {
   const [isMenuVisible, setMenuVisible] = useState(false);
   const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
@@ -36,33 +38,43 @@ const CustomHeader = ({
     { name: 'Sair' },
   ];
 
+  const MenuIcon = () => (
+    <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
+      <Feather name="menu" size={width * 0.08} color={headerStyle === 'floating' ? '#000000' : '#FFFFFF'} />
+    </TouchableOpacity>
+  );
+
   return (
     <>
-      <SafeAreaView style={{ backgroundColor: '#00A9FF' }}>
-        <View style={styles.header}>
+      {headerStyle === 'solid' && (
+        <SafeAreaView style={{ backgroundColor: '#00A9FF' }}>
+          <View style={styles.header}>
             <View style={styles.headerSide}>
               {showBackButton && (
                 <TouchableOpacity onPress={() => router.back()}>
                   <Feather name="arrow-left" size={width * 0.07} color="white" />
                 </TouchableOpacity>
               )}
-              {!showBackButton && showMenu && menuPosition === 'left' && (
-                <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
-                  <Feather name="menu" size={width * 0.07} color="white" />
-                </TouchableOpacity>
-              )}
+              {!showBackButton && showMenu && menuPosition === 'left' && <MenuIcon />}
             </View>
             <View style={styles.headerCenter}></View>
             <View style={styles.headerSide}>
-              {showMenu && menuPosition === 'right' && (
-                <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
-                  <Feather name="menu" size={width * 0.07} color="white" />
-                </TouchableOpacity>
-              )}
+              {showMenu && menuPosition === 'right' && <MenuIcon />}
             </View>
-        </View>
-      </SafeAreaView>
+          </View>
+        </SafeAreaView>
+      )}
 
+      {headerStyle === 'floating' && showMenu && (
+        <View style={[
+          styles.floatingContainer,
+          menuPosition === 'left' ? styles.floatingPositionLeft : styles.floatingPositionRight
+        ]}>
+          <MenuIcon />
+        </View>
+      )}
+
+      {/* --- CONTEÚDO DO MODAL CORRIGIDO --- */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -70,20 +82,14 @@ const CustomHeader = ({
         onRequestClose={() => setMenuVisible(false)}
       >
         <TouchableOpacity 
-          style={[
-            styles.modalOverlay,
-            menuPosition === 'right' && styles.modalOverlayRight
-          ]}
+          style={[styles.modalOverlay, menuPosition === 'right' && styles.modalOverlayRight]}
           activeOpacity={1} 
           onPressOut={() => setMenuVisible(false)}
         >
           <View style={styles.menuCard}>
             <SafeAreaView style={{ flex: 1 }}>
                 <TouchableOpacity 
-                  style={[
-                    styles.closeButtonBase,
-                    closeButtonSide === 'left' ? styles.closeButtonLeft : styles.closeButtonRight
-                  ]} 
+                  style={[styles.closeButtonBase, closeButtonSide === 'left' ? styles.closeButtonLeft : styles.closeButtonRight]} 
                   onPress={() => setMenuVisible(false)}
                 >
                   <Feather name="x" size={width * 0.08} color="black" />
@@ -96,7 +102,7 @@ const CustomHeader = ({
                   </View>
                   <View style={styles.scoreContainer}>
                     <MedalhamenuIcon style={styles.medalImage} />
-                      <Text style={styles.pontuacao}>0</Text>
+                    <Text style={styles.pontuacao}>0</Text>
                   </View>
                 </View>
 
@@ -124,23 +130,13 @@ const CustomHeader = ({
       >
         <View style={styles.logoutModalOverlay}>
             <View style={styles.logoutModalCard}>
-              <TouchableOpacity 
-                style={styles.logoutCloseButton}
-                onPress={() => setLogoutModalVisible(false)}
-              >
+              <TouchableOpacity style={styles.logoutCloseButton} onPress={() => setLogoutModalVisible(false)}>
                 <Feather name="x" size={width * 0.06} color="#888" />
               </TouchableOpacity>
               <Text style={styles.logoutModalText}>Deseja mesmo sair da conta?</Text>
               <View style={styles.logoutModalButtons}>
-                <TouchableOpacity 
-                  style={[styles.logoutButton, styles.cancelButton]} 
-                  onPress={() => setLogoutModalVisible(false)}
-                >
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.logoutButton, styles.confirmButton]}
-                  onPress={handleConfirmLogout}
-                >
+                <TouchableOpacity style={[styles.logoutButton, styles.cancelButton]} onPress={() => setLogoutModalVisible(false)}></TouchableOpacity>
+                <TouchableOpacity style={[styles.logoutButton, styles.confirmButton]} onPress={handleConfirmLogout}>
                   <Text style={styles.confirmButtonText}>Sair</Text>
                 </TouchableOpacity>
               </View>
@@ -153,16 +149,17 @@ const CustomHeader = ({
 
 
 const styles = StyleSheet.create({
+  // Estilo do cabeçalho sólido (o azul)
   header: {
     backgroundColor: '#00A9FF',
-    height: height * 0.1, // Responsivo
+    height: height * 0.1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: width * 0.04, // Responsivo
+    paddingHorizontal: width * 0.04,
   },
   headerSide: { 
-    width: width * 0.1, // Responsivo
+    width: width * 0.1,
     alignItems: 'center', 
     justifyContent: 'center' 
   },
@@ -170,12 +167,25 @@ const styles = StyleSheet.create({
     flex: 1, 
     alignItems: 'center' 
   },
-  menuButton: {
-    height: width * 0.1, // Responsivo
-    width: width * 0.1,  // Responsivo
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+  
+  // Estilos para o menu flutuante
+  floatingContainer: {
+    position: 'absolute',
+    top: height * 0.06,
+    zIndex: 10,
   },
+  floatingPositionLeft: {
+    left: width * 0.04,
+  },
+  floatingPositionRight: {
+    right: width * 0.04,
+  },
+  
+  menuButton: {
+    padding: 5,
+  },
+
+  // Estilos para o Modal do Menu Lateral
   modalOverlay: { 
     flex: 1, 
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -217,7 +227,7 @@ const styles = StyleSheet.create({
   menuframe: {
     flex: 1,
     height: height * 0.07,
-    borderRadius: 100, // Raio grande para garantir a forma de pílula
+    borderRadius: 100,
     backgroundColor: '#0090FF',
     flexDirection: 'row',
     alignItems: 'center',
@@ -232,7 +242,7 @@ const styles = StyleSheet.create({
   profileImage: {
     width: height * 0.050,
     height: height * 0.050,
-    borderRadius: (height * 0.055) / 2, // Garante que a imagem seja um círculo perfeito
+    borderRadius: (height * 0.055) / 2,
   },
   menuUserName: {
     fontSize: width * 0.05,
@@ -260,8 +270,8 @@ const styles = StyleSheet.create({
   },
   menuItem: {
     paddingVertical: height * 0.025, 
-    borderRadius: width * 0.02, // Responsivo
-    paddingHorizontal: width * 0.025, // Responsivo
+    borderRadius: width * 0.02,
+    paddingHorizontal: width * 0.025,
   },
   menuItemHover: {
     backgroundColor: 'rgba(0, 144, 255, 0.8)',
@@ -274,6 +284,8 @@ const styles = StyleSheet.create({
   menuItemTextRight: {
     textAlign: 'right',
   },
+
+  // Estilos para o Modal de Logout
   logoutModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -282,26 +294,26 @@ const styles = StyleSheet.create({
   },
   logoutModalCard: {
     width: '90%',
-    maxWidth: 320, // Manter um maxWidth é uma boa prática
+    maxWidth: 320,
     backgroundColor: '#FFF',
-    borderRadius: width * 0.03, // Responsivo
-    padding: width * 0.08, // Responsivo
+    borderRadius: width * 0.03,
+    padding: width * 0.08,
     alignItems: 'center',
     elevation: 10,
   },
   logoutCloseButton: {
     position: 'absolute',
-    top: height * 0.01, // Responsivo
-    right: width * 0.03, // Responsivo
+    top: height * 0.01,
+    right: width * 0.03,
     backgroundColor: '#4e4747',
-    borderRadius: width * 0.04, // Responsivo
-    padding: width * 0.01, // Para dar um pequeno espaço ao 'x'
+    borderRadius: width * 0.04,
+    padding: width * 0.01,
   },
   logoutModalText: {
     fontSize: width * 0.045,
     fontFamily: 'Poppins-Bold',
     textAlign: 'center',
-    marginVertical: height * 0.02, // Responsivo
+    marginVertical: height * 0.02,
     color: '#333',
   },
   logoutModalButtons: {
@@ -313,8 +325,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#D32F2F',
     position: 'center',
     flex: 1,
-    paddingVertical: height * 0.015, // Responsivo
-    borderRadius: width * 0.02, // Responsivo
+    paddingVertical: height * 0.015,
+    borderRadius: width * 0.02,
     alignItems: 'center',
     justifyContent: 'center',
   },
