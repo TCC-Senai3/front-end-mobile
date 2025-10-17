@@ -13,6 +13,11 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
+import IlustracaoIcon from '../components/icons/IlustracaoIcon';
+import CorretoIcon from '../components/icons/CorretoIcon';
+import OndaverdeIcon from '../components/icons/OndaverdeIcon';
+import OndavermelhaIcon from '../components/icons/OndavermelhaIcon';
+import CruzIcon from '../components/icons/CruzIcon';
 
 const { width } = Dimensions.get('window');
 
@@ -58,8 +63,17 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* HERO com fundo azul e ilustração */}
         <View style={styles.heroWrapper}>
-            {/* TODO: Criar HeroIllustrationIcon! */}
-            {/* <HeroIllustrationIcon style={[styles.heroImage, { width: width * 0.95, height: (width * 0.95) * (223.03/359) }]} /> */}
+          {/* Ilustração centralizada igual ao design */}
+          <View style={styles.illustrationContainer}>
+            <IlustracaoIcon width={210} height={170} style={styles.heroImage} />
+            {/* Ícones dentro do papel */}
+            <CruzIcon width={35} height={28} style={styles.cruzIcon1} />
+            <OndavermelhaIcon width={54} height={54} style={styles.ondaVermelha1} />
+            <CruzIcon width={28} height={28} style={styles.cruzIcon2} />
+            <OndavermelhaIcon width={54} height={54} style={styles.ondaVermelha2} />
+            <CorretoIcon width={41} height={41} style={styles.corretoIcon} />
+            <OndaverdeIcon width={89} height={57} style={styles.ondaVerde} />
+          </View>
           <View style={styles.heroTexts}>
             <View style={styles.heroTitleRow}>
               <Text style={[styles.heroTitle, styles.heroTitleBold]}>SENAI</Text>
@@ -144,7 +158,51 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 28,
   },
-  heroImage: { width: width * 0.6, height: width * 0.6, marginTop: 40 },
+  illustrationContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 40,
+  },
+  heroImage: { width: width * 0.6, height: width * 0.6 },
+  
+  // Ícones dentro do papel
+  cruzIcon1: {
+    position: 'absolute',
+    top: '25%',
+    left: '15%',
+    transform: [{ translateX: -14 }, { translateY: -14 }],
+  },
+  ondaVermelha1: {
+    position: 'absolute',
+    top: '25%',
+    left: '25%',
+    transform: [{ translateX: -27 }, { translateY: -27 }],
+  },
+  cruzIcon2: {
+    position: 'absolute',
+    top: '45%',
+    left: '15%',
+    transform: [{ translateX: -14 }, { translateY: -14 }],
+  },
+  ondaVermelha2: {
+    position: 'absolute',
+    top: '45%',
+    left: '25%',
+    transform: [{ translateX: -27 }, { translateY: -27 }],
+  },
+  corretoIcon: {
+    position: 'absolute',
+    top: '65%',
+    left: '15%',
+    transform: [{ translateX: -20 }, { translateY: -20 }],
+  },
+  ondaVerde: {
+    position: 'absolute',
+    top: '65%',
+    left: '25%',
+    transform: [{ translateX: -28 }, { translateY: -28 }],
+  },
   heroTexts: { alignItems: 'center', marginTop: 24, paddingHorizontal: 24 },
   heroTitleRow: { flexDirection: 'row', alignItems: 'baseline' },
   heroTitle: { color: '#FFFFFF', fontSize: 32, fontFamily: 'Poppins-Medium' },

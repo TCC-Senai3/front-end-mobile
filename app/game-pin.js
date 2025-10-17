@@ -18,6 +18,7 @@ import { useRouter, Stack } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
 import { setPin } from '../store/pinStore';
 import { OndasIcon } from '../components/icons/icon';
+import BackgroundIcon from '../components/icons/BackgroundIcon';
 
 const { height } = Dimensions.get('window');
 
@@ -40,8 +41,8 @@ export default function GamePinScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#0A84FF" />
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
         <CustomHeader title="" showMenu={true} menuPosition="right" />
 
@@ -50,7 +51,13 @@ export default function GamePinScreen() {
         contentContainerStyle={styles.scrollContentContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.headerBackground}><OndasIcon width={700} height={500} /></View>
+        <View style={styles.headerBackground}>
+          <BackgroundIcon width={Dimensions.get('window').width} height={416} />
+          <View style={styles.headerContent}>
+            <Text style={styles.logoTextSenai}>SENAI</Text>
+            <Text style={styles.logoTextSkillUp}>SKILL UP</Text>
+          </View>
+        </View>
 
         <View style={styles.cardContainer}>
           <View style={styles.card}>
@@ -80,37 +87,53 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    borderWidth: 0,
+    borderBottomWidth: 0,
   },
   scrollView: {
     flex: 1,
+    borderWidth: 0,
+    borderBottomWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   scrollContentContainer: {
     alignItems: 'center',
     flexGrow: 1,
     paddingBottom: 100,
+    borderWidth: 0,
+    borderBottomWidth: 0,
   },
   headerBackground: {
-    width: 700,
-    height: 500,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    marginTop: -100,
-    paddingTop: 42,
-    marginLeft: -0,
-  },
-  headerContent: {
+    width: '100%',
+    height: 416,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
+    marginTop: -50,
+    paddingTop: 42,
+    borderWidth: 0,
+    borderBottomWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
+    position: 'relative',
+  },
+  headerContent: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
     width: '100%',
+    height: '100%',
+    zIndex: 1,
   },
   logoTextSenai: {
-    fontFamily: 'Blinker-Bold',
+    fontFamily: 'Blinker-Black',
+    fontWeight: '900',
     fontSize: 50,
     color: '#FFFFFF',
     textShadowColor: 'rgba(0, 0, 0, 0.15)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 3,
+    textAlign: 'center',
   },
   logoTextSkillUp: {
     fontFamily: 'Poppins-Medium',
@@ -120,6 +143,7 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.15)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 3,
+    textAlign: 'center',
   },
   backButton: {
     display: 'none',

@@ -1,12 +1,39 @@
-import * as React from 'react'
-import Svg, { Circle, Line } from 'react-native-svg'
-
-const CancelIcon = ({ width = 200, height = 200, style, ...props }) => (
-  <Svg width={width} height={height} viewBox="0 0 200 200" style={style} {...props}>
-    <Circle cx={100} cy={100} r={90} fill="#FF3B30" />
-    <Line x1={60} y1={60} x2={140} y2={140} stroke="#FFFFFF" strokeWidth={16} strokeLinecap="round" />
-    <Line x1={140} y1={60} x2={60} y2={140} stroke="#FFFFFF" strokeWidth={16} strokeLinecap="round" />
+import * as React from "react"
+import Svg, { Path } from "react-native-svg"
+const SvgComponent = (props) => (
+  <Svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={240}
+    height={240}
+    fill="none"
+    viewBox="0 0 240 240"
+    preserveAspectRatio="xMidYMid meet"
+    {...props}
+  >
+    <Path
+      fill="red"
+      d="M240 120c0 5.744-.404 11.394-1.184 16.922-7.526 53.319-50.094 95.378-103.658 102.13-4.964.626-10.024.948-15.158.948C53.726 240 0 186.274 0 120S53.726 0 120 0s120 53.726 120 120Z"
+    />
+    <Path
+      fill="red"
+      d="M240 120c0 5.744-.404 11.394-1.184 16.922-7.526 53.319-50.094 95.378-103.658 102.13-4.964.626-10.024.948-15.158.948C53.726 240 0 186.274 0 120S53.726 0 120 0s120 53.726 120 120Z"
+    />
+    <Path
+      fill="#D6D6D6"
+      fillRule="evenodd"
+      d="m150.337 120.878 26.317 26.317c5.468 5.468 5.468 14.332 0 19.799l-10.66 10.661c-5.467 5.467-14.332 5.467-19.799 0l-26.318-26.318 30.46-30.459Z"
+      clipRule="evenodd"
+    />
+    <Path
+      fill="#fff"
+      d="m146.195 64.1-26.318 26.318L93.56 64.101c-5.468-5.468-14.332-5.468-19.8 0L63.1 74.76c-5.467 5.467-5.467 14.332 0 19.8l26.318 26.317-26.317 26.317c-5.468 5.467-5.468 14.332 0 19.799l10.66 10.66c5.467 5.468 14.332 5.468 19.799 0l26.317-26.317 30.46-30.459 26.317-26.318c5.468-5.468 5.468-14.332 0-19.8l-10.66-10.66c-5.467-5.467-14.331-5.467-19.799 0Z"
+    />
+    <Path
+      fill="#DC0202"
+      fillRule="evenodd"
+      d="m176.654 147.195-26.317-26.317 26.317-26.318c5.468-5.468 5.468-14.332 0-19.8l62.162 62.162c-7.526 53.319-50.094 95.378-103.658 102.13l-61.397-61.398c5.467 5.468 14.332 5.468 19.799 0l26.317-26.317 26.318 26.318c5.467 5.467 14.332 5.467 19.799 0l10.66-10.661c5.468-5.467 5.468-14.331 0-19.799Z"
+      clipRule="evenodd"
+    />
   </Svg>
 )
-
-export default CancelIcon
+export default SvgComponent

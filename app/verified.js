@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Dimensions, Image } from 'react-native';
 import { Stack } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
+import CorretoIcon from '../components/icons/CorretoIcon';
 
 const { width, height } = Dimensions.get('window');
 
@@ -12,8 +13,7 @@ export default function Verified() {
       <SafeAreaView style={styles.screenContainer}>
         <CustomHeader title="" showMenu={true} menuPosition="right" />
         <View style={styles.content}>
-          {/* TODO: Criar VerifiedIcon! */}
-          {/* <VerifiedIcon style={styles.verifiedImage} width={200} height={200} /> */}
+          <CorretoIcon style={styles.verifiedImage} width={200} height={200} />
 
           <Text style={styles.correctText}>CORRETO!</Text>
         </View>
