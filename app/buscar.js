@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import BuscaIcon from '../components/icons/BuscaIcon';
 import CustomHeader from '../components/CustomHeader';
 
@@ -8,7 +8,11 @@ const MOCK_RESULTADOS = [
   { id: '2', pontos: 48, nome: 'Backend', posicao: 2, status: true },
   { id: '3', pontos: 46, nome: 'Frontend', posicao: 3, status: true },
   { id: '4', pontos: 44, nome: 'Redes', posicao: 4, status: true },
-  { id: '5', pontos: 42, nome: 'Banco de Dados', posicao: 5, status: true }, 
+  { id: '5', pontos: 42, nome: 'Banco de Dados', posicao: 5, status: true },
+  { id: '6', pontos: 40, nome: 'Segurança', posicao: 6, status: true },
+  { id: '8', pontos: 36, nome: 'DevOps', posicao: 8, status: true },
+  { id: '9', pontos: 34, nome: 'Mobile', posicao: 9, status: true },
+  { id: '12', pontos: 28, nome: 'IoT', posicao: 12, status: true },
 ];
 
 export default function BuscarScreen() {
@@ -30,32 +34,33 @@ export default function BuscarScreen() {
           />
         </View>
 
-      {/* HEADER DA LISTA */}
-      <View style={styles.headerList}>
-        <Text style={styles.headerCol}>PONTOS</Text>
-        <Text style={styles.headerCol}>NOME</Text>
-        <Text style={styles.headerCol}>POSIÇÃO</Text>
-        <Text style={styles.headerCol}>STATUS</Text>
-      </View>
+        {/* HEADER DA LISTA */}
+        <View style={styles.headerList}>
+          <Text style={styles.headerCol}>PONTOS</Text>
+          <Text style={styles.headerCol}>NOME</Text>
+          <Text style={styles.headerCol}>POSIÇÃO</Text>
+          <Text style={styles.headerCol}>STATUS</Text>
+        </View>
 
-      <FlatList
-        data={MOCK_RESULTADOS.filter(item =>
-          busca.trim() === '' || item.nome.toLowerCase().includes(busca.toLowerCase())
-        )}
-        style={{ width: '100%' }}
-        contentContainerStyle={{ paddingBottom: 47 }}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.cell}>{item.pontos}</Text>
-            <Text style={styles.cell} numberOfLines={1}>{item.nome}</Text>
-            <Text style={styles.position}>{item.posicao}</Text>
-            <View style={styles.statusWrap}>
-              <View style={styles.statusDot} />
+        {/* SCROLL VIEW PARA A LISTA */}
+        <ScrollView 
+          style={styles.scrollContainer}
+          showsVerticalScrollIndicator={true}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {MOCK_RESULTADOS.filter(item =>
+            busca.trim() === '' || item.nome.toLowerCase().includes(busca.toLowerCase())
+          ).map((item) => (
+            <View key={item.id} style={styles.card}>
+              <Text style={styles.cell}>{item.pontos}</Text>
+              <Text style={styles.cell} numberOfLines={1}>{item.nome}</Text>
+              <Text style={styles.position}>{item.posicao}</Text>
+              <View style={styles.statusWrap}>
+                <View style={styles.statusDot} />
+              </View>
             </View>
-          </View>
-        )}
-      />
+          ))}
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -72,6 +77,14 @@ const styles = StyleSheet.create({
     backgroundColor: PRIMARY_BLUE,
     alignItems: 'center',
     paddingTop: 40,
+  },
+  scrollContainer: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollContent: {
+    paddingBottom: 47,
+    alignItems: 'center',
   },
   searchBar: {
     flexDirection: 'row',

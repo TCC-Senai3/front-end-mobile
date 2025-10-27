@@ -78,12 +78,12 @@ export default function PartidaScreen() {
   );
 }
 
-const PRIMARY_BLUE = '#00A9FF';
+const PRIMARY_BLUE = '#1CB0FC';
 const DARK_BLUE = '#1E40AF';
-const RED = '#DC2626';
+const RED = '#FF0000';
 const CARD_BG = '#FFFFFF';
-const TEXT_DARK = '#1F2937';
-const OPTION_BLUE = '#3B82F6';
+const TEXT_DARK = '#3B3939';
+const OPTION_BLUE = '#00B7FF';
 
 const styles = StyleSheet.create({
   safeArea: {

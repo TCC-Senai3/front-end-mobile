@@ -21,20 +21,20 @@ export default function FimDeJogoScreen() {
     const iconStyle = styles.trophyIcon;
     if (rank === 1)
       return (
-        <View style={{ transform: [{ scale: 1.35 }] }}>
-          <Trofeu1Icon width={iconSize} height={iconSize} style={iconStyle} />
+        <View style={{ transform: [{ scale: 2.00 }] }}>
+          <Trofeu1Icon width={50} height={50} style={iconStyle} />
         </View>
       );
     if (rank === 2)
       return (
-        <View style={{ transform: [{ scale: 1.35 }] }}>
-          <Trofeu2Icon width={iconSize} height={iconSize} style={iconStyle} />
+        <View style={{ transform: [{ scale: 2.00 }] }}>
+          <Trofeu2Icon width={50} height={50} style={iconStyle} />
         </View>
       );
     if (rank === 3)
       return (
-        <View style={{ transform: [{ scale: 1.35 }] }}>
-          <Trofeu3Icon width={iconSize} height={iconSize} style={iconStyle} />
+        <View style={{ transform: [{ scale: 2.00 }] }}>
+          <Trofeu3Icon width={50} height={ 50} style={iconStyle} />
         </View>
       );
     return null;
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     marginTop: (width * 0.16 / 2) + 15,
   },
   score: {
-    fontSize: 18,
+    fontSize: 25,
     fontFamily: 'Poppins-Bold',
     color: TEXT_WHITE,
     textAlign: 'center',
