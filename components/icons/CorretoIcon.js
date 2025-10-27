@@ -1,33 +1,58 @@
-import * as React from "react"
-import Svg, { Path } from "react-native-svg"
-const SvgComponent = (props) => (
-  <Svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={225}
-    height={225}
-    fill="none"
-    viewBox="0 0 225 225"
-    preserveAspectRatio="xMidYMid meet"
-    {...props}
-  >
-    <Path
-      fill="#00ED4B"
-      d="M225 112.5c0 62.132-50.368 112.5-112.5 112.5S0 174.632 0 112.5 50.368 0 112.5 0 225 50.368 225 112.5Z"
-    />
-    <Path
-      fill="#00D53C"
-      fillRule="evenodd"
-      d="M225 112.5c0 49.51-31.982 91.549-76.413 106.587L89.5 160l90-93 45.5 45.5Z"
-      clipRule="evenodd"
-    />
-    <Path
-      fill="#fff"
-      d="M183 76a12.959 12.959 0 0 1-3.892 9.276A12.96 12.96 0 0 1 170 89c-7.18 0-13-5.82-13-13 0-3.522 1.401-6.718 3.676-9.059A12.961 12.961 0 0 1 170 63c7.18 0 13 5.82 13 13ZM69 109c0 7.18-5.82 13-13 13-3.146 0-6.03-1.117-8.28-2.977a13.068 13.068 0 0 1-1.72-1.716A12.945 12.945 0 0 1 43 109c0-7.18 5.82-13 13-13 3.687 0 7.015 1.535 9.38 4a12.957 12.957 0 0 1 3.62 9ZM112 147a14.948 14.948 0 0 1-4.5 10.712A14.95 14.95 0 0 1 97 162a14.947 14.947 0 0 1-11.021-4.825A14.944 14.944 0 0 1 82 147c0-8.284 6.716-15 15-15 8.284 0 15 6.716 15 15Z"
-    />
-    <Path
-      fill="#fff"
-      d="M69 109c0 7.18-5.82 13-13 13-3.146 0-6.03-1.117-8.28-2.977l38.259 38.152A14.944 14.944 0 0 1 82 147c0-8.284 6.716-15 15-15l-31.62-32a12.957 12.957 0 0 1 3.62 9ZM170 89c-7.18 0-13-5.82-13-13 0-3.522 1.401-6.718 3.676-9.059L97 132c8.284 0 15 6.716 15 15 0 4.026-1.586 7.681-4.167 10.375l71.275-72.099A12.96 12.96 0 0 1 170 89Z"
-    />
-  </Svg>
-)
-export default SvgComponent
+// CorretoIcon.js - VERSÃO REFEITA DO ZERO PARA FUNCIONAR
+import * as React from "react";
+import Svg, { Path, Defs, Pattern, Image } from "react-native-svg";
+
+const SvgComponent = (props) => {
+  // O tamanho do seu ícone na tela
+  const size = 40; 
+  // O tamanho do quadrado com a imagem dentro do ícone
+  const squareSize = 21.08; 
+
+  return (
+    <Svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`} // Cria um canvas estável do mesmo tamanho do ícone
+      xmlns="http://www.w3.org/2000/svg"
+      xmlnsXlink="http://www.w3.org/1999/xlink"
+      {...props}
+    >
+      <Defs>
+        <Pattern
+          id="imageFill"
+          width="100%"
+          height="100%"
+          patternContentUnits="objectBoundingBox"
+        >
+          <Image
+            width={1} // Em objectBoundingBox, 1 significa 100%
+            height={1}
+            preserveAspectRatio="none"
+            href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAAAXNSR0IArs4c6QAAIABJREFUeAHtnQmcFMXZuJtDQEUTY4xHEo8kxiv6Rc1lopFPdoZFxAMBz4AJ3vHGgAfoSEBA2K6eXUDXC1DwWN2dnsVgjAf5NH+veF8xaLxQRNidavCIGKT+qYWR5Vh2dna6p7vr4ffjt9dMd9dTb7/PWz3VXZbFPwhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCEAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCEAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCEAAQhAAAIQgAAEIAABCEAAAhCAAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAAhCAAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhCAAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAAB3wn8f/LS5mdrZu/CAAAAAElFTSuQmCC"
+            xlinkHref="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAAAXNSR0IArs4c6QAAIABJREFUeAHtnQmcFMXZuJtDQEUTY4xHEo8kxiv6Rc1lopFPdoZFxAMBz4AJ3vHGgAfoSEBA2K6eXUDXC1DwWN2dnsVgjAf5NH+veF8xaLxQRNidavCIGKT+qYWR5Vh2dna6p7vr4ffjt9dMd9dTb7/PWz3VXZbFPwhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCAAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCEAAQhAAAIQgAAEIAABCEAAAhCAAAQgAAEIQAACEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAAhCAAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhCAAAQhAAAIQgAAEIAABCEAAQhAAAIQgAAEIAABCEAAQhAAAIQgAB3wn8f/LS5mdrZu/CAAAAAElFTSuQmCC"
+          />
+        </Pattern>
+      </Defs>
+
+      {/* A MÁGICA ESTÁ AQUI:
+        1. translate: Move o ponto de referência para o CENTRO EXATO do ícone (20, 20).
+        2. rotate: Gira em torno desse novo centro.
+      */}
+      <Path
+        d={`
+          M ${size / 2 - squareSize / 2} ${size / 2 - squareSize / 2}
+          h ${squareSize}
+          v ${squareSize}
+          h ${-squareSize}
+          Z
+        `}
+        fill="url(#imageFill)"
+        transform={`
+          rotate(26.785, ${size / 2}, ${size / 2})
+        `}
+      />
+    </Svg>
+  );
+};
+
+export default SvgComponent;

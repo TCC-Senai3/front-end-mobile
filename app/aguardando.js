@@ -24,6 +24,9 @@ export default function Aguardando() {
         <View style={styles.content}>
           <GameboyIcon style={styles.illustration} />
           <Text style={styles.title}>Aguardando o host da Sala</Text>
+          <View style={styles.codeContainer}>
+            <Text style={styles.code}>CODE: {code}</Text>
+          </View>
           <View style={styles.card}>
             <View style={styles.loadingRow}>
               <ActivityIndicator size="small" color="#1CB0FC" />
@@ -37,7 +40,6 @@ export default function Aguardando() {
             </View>
           </View>
         </View>
-        <View style={styles.homeIndicator} />
       </SafeAreaView>
     </>
   );
@@ -151,17 +153,24 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: '#FFFFFF',
   },
-  homeIndicator: {
-    position: 'absolute',
-    bottom: 10,
-    width: 150,
-    height: 6,
-    backgroundColor: '#000',
-    borderRadius: 100,
-  },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  codeContainer: {
+    width: '100%',
+    marginTop: 20,
+    alignItems: 'center',
+    paddingHorizontal: 30,
+  },
+  code: {
+    color: '#FFF',
+    fontSize: 30,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    fontFamily: 'Blinker-Bold',
+    textAlign: 'center',
+    flex: 1,
   },
 });

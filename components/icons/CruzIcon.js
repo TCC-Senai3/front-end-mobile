@@ -4,15 +4,15 @@ const SvgComponent = (props) => (
   <Svg
     xmlns="http://www.w3.org/2000/svg"
     xmlnsXlink="http://www.w3.org/1999/xlink"
-    width={28}
-    height={28}
+    width={20}
+    height={20}
     fill="none"
     {...props}
   >
     <Path
       fill="url(#a)"
-      d="M0 0h21.737v21.738H0z"
-      transform="rotate(16.775 3.137 21.274) skewX(.001)"
+      d="M0 0h15.74v15.74H0z"
+      transform="rotate(16.775 2.271 15.404) skewX(.001)"
     />
     <Defs>
       <Pattern

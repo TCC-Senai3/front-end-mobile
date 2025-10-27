@@ -4,10 +4,10 @@ import React, { useState, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import styles from '../styles/JogoStyles'; // Usaremos o novo estilo unificado
+
 import { MedalhaIcon, OndasIcon, AddIcon, LivroIcon } from './icons/icon';
 
-
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const cardData = [
   { title: 'CRIAR SALA', subtitle: 'Crie uma sala para você e seus amigos', type: 'criar-sala', buttonText: 'CRIAR' },
@@ -36,28 +36,27 @@ export default function JogoSection() {
   };
 
   return (
-    // Esta View substitui o <View style={styles.container}> do seu código original
-    <View> 
-        <View style={styles.waveContainer}>
-            <OndasIcon style={styles.waveImage} />
-            <View style={styles.appTitleContainer}>
-                <Text style={styles.appTitleSenai}>SENAI</Text>
-                <Text style={styles.appTitleSkillUp}>SKILL UP</Text>
-            </View>
+    <View>
+      <View style={styles.waveContainer}>
+        <OndasIcon width={width} height={height * 0.5} style={styles.waveImage} />
+        <View style={styles.appTitleContainer}>
+          <Text style={styles.appTitleSenai}>SENAI</Text>
+          <Text style={styles.appTitleSkillUp}>SKILL UP</Text>
         </View>
-        <View style={styles.carouselArea}>
-            <ScrollView
-                ref={scrollRef}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onScroll={(event) => {
-                    const slide = Math.round(event.nativeEvent.contentOffset.x / cardWidth);
-                    if (slide !== activeIndex) {
-                        setActiveIndex(slide);
-                    }
-                }}
-                contentContainerStyle={styles.carouselContainer}
+      </View>
+      <View style={styles.carouselArea}>
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={(event) => {
+            const slide = Math.round(event.nativeEvent.contentOffset.x / cardWidth);
+            if (slide !== activeIndex) {
+              setActiveIndex(slide);
+            }
+          }}
+          contentContainerStyle={styles.carouselContainer}
                 scrollEventThrottle={16}
             >
                 {cardData.map((card, index) => (

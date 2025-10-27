@@ -2,20 +2,19 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Dimensions, ScrollView, ImageBackground } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { PerfilIcon, MedalhaIcon, RankingIcon } from '../components/icons/icon';
+import { PerfilIcon, MedalhaIcon, RankingIcon, Trofeu1Icon } from '../components/icons/icon';
 
 const { width } = Dimensions.get('window');
 
 export default function PerfilScreen() {
   const router = useRouter();
 
-  // Dados mockados (substituir quando houver backend/estado real)
+  // Dados mockados (substituir quando houver backend)
   const profile = {
     name: 'Usuario200',
     email: 'usuario200@gmail.com',
     rankPosition: 1,
     points: 200,
-    tag: '#',
     bio: 'texto limitado a uma quantidade de caracteres',
   };
 
@@ -40,7 +39,7 @@ export default function PerfilScreen() {
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarCircle}>
               {/* Avatar do perfil (ícone) */}
-              <PerfilIcon style={styles.avatarImage} width={70} height={70} />
+              <PerfilIcon style={styles.avatarImage} width={80} height={80} />
               <View style={styles.statusDot} />
             </View>
             <Text style={styles.name}>{profile.name}</Text>
@@ -51,7 +50,7 @@ export default function PerfilScreen() {
             <View style={styles.gridCard}>
               <View style={styles.gridHeader}>
                 {/* Ícones da grid: */}
-                <RankingIcon style={styles.gridIcon} width={20} height={20} />
+                <Trofeu1Icon style={styles.gridIcon} width={28} height={27} />
                 <Text style={styles.gridTitle}>POSIÇÃO NO RANKING</Text>
               </View>
               <Text style={styles.gridValue}>{profile.rankPosition}</Text>
@@ -59,7 +58,7 @@ export default function PerfilScreen() {
             <View style={styles.gridCard}>
               <View style={styles.gridHeader}>
                 {/* Ícones da grid: */}
-                <MedalhaIcon style={styles.gridIcon} width={20} height={20} />
+                <MedalhaIcon style={styles.gridIcon} width={25} height={27} />
                 <Text style={styles.gridTitle}>PONTOS</Text>
               </View>
               <Text style={styles.gridValue}>{`${profile.points}`.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1 ')}</Text>
@@ -71,7 +70,7 @@ export default function PerfilScreen() {
               <Text style={styles.sectionLabel}>TAG#</Text>
               <View style={styles.tagRow}>
                 {/* Ícones da grid: */}
-                <RankingIcon style={styles.smallIcon} width={18} height={18} />
+                <Trofeu1Icon width={30} height={30} style={{ marginRight: 8, resizeMode: 'contain' }} />
                 <Text style={styles.tagText}>{profile.tag}</Text>
               </View>
             </View>
@@ -127,14 +126,14 @@ const styles = StyleSheet.create({
   },
   avatarWrapper: { alignItems: 'center', marginTop: 8 },
   avatarCircle: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarImage: { width: 70, height: 70 },
+  avatarImage: { width: 80, height: 80 },
   statusDot: {
     position: 'absolute',
     right: 6,

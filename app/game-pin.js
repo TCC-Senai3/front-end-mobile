@@ -52,11 +52,12 @@ export default function GamePinScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.headerBackground}>
-          <BackgroundIcon width={Dimensions.get('window').width} height={416} />
+          <BackgroundIcon width={Dimensions.get('window').width} height={417} />
           <View style={styles.headerContent}>
             <Text style={styles.logoTextSenai}>SENAI</Text>
             <Text style={styles.logoTextSkillUp}>SKILL UP</Text>
           </View>
+          <View style={styles.lineCover} />
         </View>
 
         <View style={styles.cardContainer}>
@@ -116,6 +117,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     elevation: 0,
     position: 'relative',
+    marginBottom: 40,
   },
   headerContent: {
     position: 'absolute',
@@ -192,5 +194,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
     textTransform: 'uppercase',
+  },
+  lineCover: {
+    position: 'absolute',
+    bottom: -22,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: '#FFFFFF',
+    zIndex: 10,
   },
 });

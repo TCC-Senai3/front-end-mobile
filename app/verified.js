@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, Dimensions, Image } from 'react-n
 import { Stack } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
 import CorretoIcon from '../components/icons/CorretoIcon';
+import VerifiedIcon from '../components/icons/VerifiedIcon';
 
 const { width, height } = Dimensions.get('window');
 
@@ -13,8 +14,9 @@ export default function Verified() {
       <SafeAreaView style={styles.screenContainer}>
         <CustomHeader title="" showMenu={true} menuPosition="right" />
         <View style={styles.content}>
-          <CorretoIcon style={styles.verifiedImage} width={200} height={200} />
-
+          <View style={styles.verifiedImageWrapper}>
+            <VerifiedIcon width={225} height={225} />
+          </View>
           <Text style={styles.correctText}>CORRETO!</Text>
         </View>
         {/* Home bar */}
@@ -32,10 +34,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#1CB0FC',
     justifyContent: 'flex-start',
   },
-  verifiedImage: {
-    marginTop: -40, // igual ao erro
-    width: 200,
-    height: 200,
+  verifiedImageWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 225,
+    height: 225,
+    marginTop: 0,
     shadowColor: '#000',
     shadowOpacity: 0.15,
     shadowOffset: { width: 0, height: 10 },

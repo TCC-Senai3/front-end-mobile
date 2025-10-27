@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getPin, clearPin } from '../store/pinStore';
@@ -33,7 +34,11 @@ export default function Sala() {
       <View style={styles.content}>
         {/* Código da sala */}
         <View style={styles.codeContainer}>
-          <Text style={styles.code}>CODE: {code}</Text>
+          <Text style={styles.code}>
+            <Text style={{ fontFamily: 'Blinker-Bold', color: '#FFF', fontSize: 36, letterSpacing: 2 }}>CODE:</Text>
+            {' '}
+            <Text style={styles.codeValue}>{code}</Text>
+          </Text>
         </View>
         {/* Card de Ações */}
         <View style={styles.actionCard}>
@@ -53,20 +58,18 @@ export default function Sala() {
           </View>
         </View>
         {/* Lista de Usuários */}
-        <View style={{ width: 330, marginTop: 40 }}>
-          {[0, 1, 2].map((rowIdx) => (
-            <View key={rowIdx} style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 20 }}>
-              {MOCK_PLAYERS.slice(rowIdx * 2, rowIdx * 2 + 2).map((player) => (
-                <View style={styles.playerCard} key={player.id}>
-                  <View style={styles.avatarWrapper}>
-                    <PerfilIcon style={styles.avatar} width={60} height={60} />
-                  </View>
-                  <Text style={styles.playerName}>{player.name}</Text>
+        <ScrollView style={{ flex: 1, width: '100%' }} contentContainerStyle={styles.playersGrid} showsVerticalScrollIndicator={false}>
+          {MOCK_PLAYERS.map((player) => (
+            <View style={styles.playerCard} key={player.id}>
+              <View style={styles.avatarWrapper}>
+                <View style={styles.avatarCircle}>
+                  <PerfilIcon style={styles.avatar} width={40} height={48} />
                 </View>
-              ))}
+              </View>
+              <Text style={styles.playerName}>{player.name}</Text>
             </View>
           ))}
-        </View>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -76,7 +79,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#1CB0FC',
-    // alignItems: 'center',  // Removido para header não ser centralizado
     justifyContent: 'flex-start',
   },
   content: {
@@ -86,18 +88,33 @@ const styles = StyleSheet.create({
   },
   codeContainer: {
     width: '100%',
-    marginTop: 20,
+    marginTop: 8,
     alignItems: 'center',
     paddingHorizontal: 30,
+    marginBottom: 0,
   },
   code: {
     color: '#FFF',
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: 'bold',
     letterSpacing: 2,
     fontFamily: 'Blinker-Bold',
     textAlign: 'center',
-    flex: 1,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  codeLabel: {
+    color: '#FFF',
+    fontFamily: 'Blinker-Bold',
+    fontWeight: 'bold',
+    fontSize: 24,
+    letterSpacing: 1,
+  },
+  codeValue: {
+    color: '#FFF',
+    fontFamily: 'Blinker-Bold',
+    fontSize: 36,
+    letterSpacing: 2,
   },
   actionCard: {
     flexDirection: 'row',
@@ -144,7 +161,7 @@ const styles = StyleSheet.create({
   },
   iniciarText: {
     color: '#FFF',
-    fontWeight: 'bold',
+    fontWeight: 'Blinker-Bold',
     fontSize: 25,
     letterSpacing: 1,
     fontFamily: 'Blinker-Bold',
@@ -156,45 +173,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    alignItems: 'center',
-    width: 330,
-    marginTop: 40,
+    alignItems: 'flex-start',
+    width: '100%',
+    marginTop: 90,
+    gap: 7,
   },
   playerCard: {
     backgroundColor: '#FFF',
-    borderRadius: 10,
-    width: 156,
-    height: 70,
-    marginBottom: 20,
+    borderRadius: 14,
+    width: 149,
+    height: 78,
+    marginBottom: 40,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 10,
-    elevation: 8,
-    // sombra do card (similar ao SVG)
+    marginHorizontal: 8,
+    elevation: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    paddingTop: 34,
   },
   avatarWrapper: {
     position: 'absolute',
-    top: -30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
+    top: -22,
+    zIndex: 2,
   },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginBottom: 0,
-    // sombra do avatar
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
-  },
+
   playerName: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 18,

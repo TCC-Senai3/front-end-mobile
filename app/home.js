@@ -15,10 +15,9 @@ import { Link } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
 import IlustracaoIcon from '../components/icons/IlustracaoIcon';
 import CorretoIcon from '../components/icons/CorretoIcon';
-import OndaverdeIcon from '../components/icons/OndaverdeIcon';
 import OndavermelhaIcon from '../components/icons/OndavermelhaIcon';
 import CruzIcon from '../components/icons/CruzIcon';
-
+import OndaverdeIcon from '../components/icons/OndaverdeIcon';
 const { width } = Dimensions.get('window');
 
 export const options = {
@@ -67,12 +66,12 @@ export default function HomeScreen() {
           <View style={styles.illustrationContainer}>
             <IlustracaoIcon width={210} height={170} style={styles.heroImage} />
             {/* Ícones dentro do papel */}
-            <CruzIcon width={35} height={28} style={styles.cruzIcon1} />
-            <OndavermelhaIcon width={54} height={54} style={styles.ondaVermelha1} />
-            <CruzIcon width={28} height={28} style={styles.cruzIcon2} />
-            <OndavermelhaIcon width={54} height={54} style={styles.ondaVermelha2} />
-            <CorretoIcon width={41} height={41} style={styles.corretoIcon} />
-            <OndaverdeIcon width={89} height={57} style={styles.ondaVerde} />
+            <CruzIcon width={25} height={20} style={styles.cruzIcon1} />
+            <OndavermelhaIcon width={35} height={35} style={styles.ondaVermelha1} />
+            <CruzIcon width={20} height={20} style={styles.cruzIcon2} />
+            <OndavermelhaIcon width={35} height={35} style={styles.ondaVermelha2} />
+            <CorretoIcon width={40} height={40} style={styles.corretoIcon} />
+            <OndaverdeIcon width={60} height={40} style={styles.ondaVerde} />
           </View>
           <View style={styles.heroTexts}>
             <View style={styles.heroTitleRow}>
@@ -86,11 +85,14 @@ export default function HomeScreen() {
              </Text>
             
           </View>
-          <Link href="/game-pin" asChild>
-            <TouchableOpacity style={styles.ctaButton}>
-              <Text style={styles.ctaButtonText}>Entrar</Text>
-            </TouchableOpacity>
-          </Link>
+          <View style={styles.ctaButtonsContainer}>
+            <Link href="/game-pin" asChild>
+              <TouchableOpacity style={styles.ctaButton}>
+                <Text style={styles.ctaButtonText}>Entrar</Text>
+              </TouchableOpacity>
+            </Link>
+
+          </View>
         </View>
 
         {/* SEÇÕES */}
@@ -195,7 +197,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '65%',
     left: '15%',
-    transform: [{ translateX: -20 }, { translateY: -20 }],
+    transform: [{ translateX: -14 }, { translateY: -14 }],
   },
   ondaVerde: {
     position: 'absolute',
@@ -209,8 +211,11 @@ const styles = StyleSheet.create({
   heroTitleBold: { fontFamily: 'Blinker-Bold', fontSize: 36 },
   heroSubtitle: { color: '#FFFFFF', textAlign: 'center', marginTop: 12, lineHeight: 22, fontFamily: 'Poppins-Regular' },
   heroSubtitleBold: { fontFamily: 'Poppins-SemiBold' },
-  ctaButton: { backgroundColor: '#FFFFFF', paddingVertical: 12, paddingHorizontal: 36, borderRadius: 15, marginTop: 20 },
+  ctaButtonsContainer: { flexDirection: 'row', gap: 12, marginTop: 20, justifyContent: 'center' },
+  ctaButton: { backgroundColor: '#FFFFFF', paddingVertical: 12, paddingHorizontal: 36, borderRadius: 15 },
   ctaButtonText: { color: '#00ABFF', fontSize: 20, fontFamily: 'Poppins-SemiBold' },
+  ctaButtonSecondary: { backgroundColor: 'transparent', paddingVertical: 12, paddingHorizontal: 36, borderRadius: 15, borderWidth: 2, borderColor: '#FFFFFF' },
+  ctaButtonSecondaryText: { color: '#FFFFFF', fontSize: 20, fontFamily: 'Poppins-SemiBold' },
 
   // SEÇÕES
   sections: { paddingHorizontal: 28, paddingTop: 32 },

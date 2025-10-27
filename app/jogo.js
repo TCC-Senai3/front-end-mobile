@@ -99,8 +99,10 @@ const localStyles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   // --- ESTILO CORRIGIDO PARA O SCROLL HORIZONTAL ---
- 
- frameContainer: {
-  width: width,
-}
+  horizontalScrollView: {
+    height: 400, // Altura fixa para o scroll horizontal
+  },
+  frameContainer: {
+    width: width,
+  }
 });

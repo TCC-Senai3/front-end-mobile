@@ -96,6 +96,20 @@ export default function Layout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="recompensa"
+        options={{
+          title: 'Recompensa',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="buscar"
+        options={{
+          title: 'Buscar',
+          headerShown: false,
+        }}
+      />
       {/* Adicione outras telas do SkillUpMobile aqui, se necessário */}
     </Stack>
   );
