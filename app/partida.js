@@ -79,7 +79,7 @@ export default function PartidaScreen() {
 }
 
 const PRIMARY_BLUE = '#1CB0FC';
-const DARK_BLUE = '#1E40AF';
+const DARK_BLUE = '#01324B';
 const RED = '#FF0000';
 const CARD_BG = '#FFFFFF';
 const TEXT_DARK = '#3B3939';
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   },
   timerButton: {
     backgroundColor: DARK_BLUE,
-    borderRadius: 8,
+    borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginBottom: 8,
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   },
   exitButton: {
     backgroundColor: RED,
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },

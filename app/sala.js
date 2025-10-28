@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { getPin, clearPin } from '../store/pinStore';
 import CustomHeader from '../components/CustomHeader';
-import { PerfilIcon } from '../components/icons/icon';
+import { UserIcon } from '../components/icons/icon';
 
 const { width, height } = Dimensions.get('window');
 
@@ -63,7 +63,7 @@ export default function Sala() {
             <View style={styles.playerCard} key={player.id}>
               <View style={styles.avatarWrapper}>
                 <View style={styles.avatarCircle}>
-                  <PerfilIcon style={styles.avatar} width={40} height={48} />
+                  <UserIcon style={styles.avatar} width={40} height={48} />
                 </View>
               </View>
               <Text style={styles.playerName}>{player.name}</Text>

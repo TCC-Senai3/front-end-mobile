@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TextInput, Image } from 'react-native';
 import styles from '../styles/JogoStyles';
-import { Trofeu1Icon, Trofeu2Icon, Trofeu3Icon, PerfilIcon, MedalhamenuIcon, RankingBannerIcon, BuscaIcon } from './icons/icon';
+import { Trofeu1Icon, Trofeu2Icon, Trofeu3Icon, UserIcon, MedalhamenuIcon, RankingBannerIcon, BuscaIcon } from './icons/icon';
 
 
 const rankingData = [
@@ -48,7 +48,7 @@ export default function RankingSection() {
     return (
       <View key={item.id} style={styles.userCard}>
         <View style={styles.rankContainer}>{getRankComponent()}</View>
-        <PerfilIcon style={styles.avatar} />
+        <UserIcon style={styles.avatar} />
         <Text style={styles.userName}>{item.name}</Text>
         <View style={styles.scoreContainer}>
             <MedalhamenuIcon style={styles.scoreIcon} />

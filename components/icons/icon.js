@@ -7,6 +7,7 @@ export { default as MedalhaIcon } from './MedalhaIcon';
 export { default as MedalhamenuIcon } from './MedalhamenuIcon';
 export { default as OndasIcon } from './OndasIcon';
 export { default as PerfilIcon } from './PerfilIcon';
+export { default as UserIcon } from './UserIcon';
 export { default as QuestionariosBannerIcon } from './QuestionariosBannerIcon';
 export { default as QuizCardIcon } from './QuizCardIcon';
 export { default as RankingBannerIcon } from './RankingBannerIcon';

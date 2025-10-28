@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Dimensions, ScrollView, ImageBackground } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { PerfilIcon, MedalhaIcon, RankingIcon, Trofeu1Icon } from '../components/icons/icon';
+import { UserIcon, MedalhaIcon, RankingIcon, Trofeu1Icon } from '../components/icons/icon';
 
 const { width } = Dimensions.get('window');
 
@@ -39,7 +39,7 @@ export default function PerfilScreen() {
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarCircle}>
               {/* Avatar do perfil (ícone) */}
-              <PerfilIcon style={styles.avatarImage} width={80} height={80} />
+              <UserIcon style={styles.avatarImage} width={80} height={80} />
               <View style={styles.statusDot} />
             </View>
             <Text style={styles.name}>{profile.name}</Text>

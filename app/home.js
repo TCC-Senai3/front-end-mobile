@@ -13,11 +13,10 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
-import IlustracaoIcon from '../components/icons/IlustracaoIcon';
-import CorretoIcon from '../components/icons/CorretoIcon';
 import OndavermelhaIcon from '../components/icons/OndavermelhaIcon';
 import CruzIcon from '../components/icons/CruzIcon';
 import OndaverdeIcon from '../components/icons/OndaverdeIcon';
+import InterrogacaoIcon from '../components/icons/InterrogacaoIcon';
 const { width } = Dimensions.get('window');
 
 export const options = {
@@ -39,7 +38,7 @@ export default function HomeScreen() {
         'O jogo conta com dois modos de gameplay: normal, com perguntas livres ou salas de professores, e multiplayer, com competição, ranking e cartas de ajuda.',
     },
     {
-      icon: { uri: 'https://c.animaapp.com/mesh3yq5uHbvsH/img/question-1.svg' },
+      icon: { uri: 'https://c.animaapp.com/mesh3yq5uHbvsH/img/question-1.png' },
       
       title: 'Proposito',
       description:
@@ -99,8 +98,8 @@ export default function HomeScreen() {
         <View style={styles.sections}>
           {featureSections.map((s, idx) => (
             <View key={idx} style={styles.sectionCard}>
-              {s.isSvg ? (
-                <Image source={s.icon} style={styles.sectionIcon} />
+              {s.title === 'Proposito' ? (
+                <InterrogacaoIcon width={68} height={68} style={styles.sectionIcon} />
               ) : (
                 <Image source={s.icon} style={styles.sectionIcon} />
               )}
@@ -310,15 +309,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignSelf: 'center',
   },
-  blueBubbleTail: {
-    position: 'absolute',
-    right: 20,
-    bottom: -20,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 20,
-    borderLeftColor: '#00ABFF',
-    borderBottomWidth: 20,
-    borderBottomColor: 'transparent',
-  },
+  
 });
