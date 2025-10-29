@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     },
     searchInput: {
         flex: 1,
-        height: 60,
+        height: 50,
         fontSize: width * 0.04,
         fontFamily: 'Poppins-Regular',
         backgroundColor: Cores.branco,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     rankImage: {
         width: width * 0.08,
         height: width * 0.08,
-        resizeMode: 'contain',
+        resizeMode: 'contain'
     },
     rankNumber: {
         fontSize: width * 0.045,

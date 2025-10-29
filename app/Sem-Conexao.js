@@ -37,7 +37,8 @@ export default function SemConexaoScreen() {
                 <CustomHeader 
                     showMenu={true} 
                     headerStyle='floating' // Define o modo flutuante
-                    menuPosition='right'   // Posição à direita
+                    menuPosition='right'    // Posição à direita
+                    closeButtonSide='left'
                 />
 
                 <View style={styles.contentContainer}>

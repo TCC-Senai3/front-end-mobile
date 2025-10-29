@@ -1,44 +1,60 @@
-// app/index.js
-import { View, Text, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, StatusBar } from 'react-native';
 import { Link } from 'expo-router';
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Bem-vindo ao Senai Skill Up!</Text>
-      <Link href="/contato" style={styles.link}>Contato</Link>
-      <Link href="/suporte" style={styles.link}>Suporte</Link>
-      <Link href="/termos" style={styles.link}>Termos</Link>
-      <Link href="/jogo" style={styles.link}>jogo</Link>
-      <Link href="/Redefinicao-Senha" style={styles.link}>nova-Senha</Link>
-      <Link href="/Recuperacao-Email" style={styles.link}>Recuperação-Email</Link>
-      <Link href="/Sem-Conexao" style={styles.link}>Sem-Conexão</Link>
-      <Link href="/home" style={styles.link}>home</Link>
-      <Link href="/perfil" style={styles.link}>perfil</Link>
-      <Link href="/sala" style={styles.link}>sala</Link>
-      <Link href="/game-pin" style={styles.link}>game-pin</Link>
-      <Link href="/verified" style={styles.link}>verified</Link>
-      <Link href="/error" style={styles.link}>error</Link>
-      <Link href="/aguardando" style={styles.link}>aguardando</Link>
-      <Link href="/criar-sala" style={styles.link}>Criar-sala</Link>
-      <Link href="/partida" style={styles.link}>Partida</Link>
-      <Link href="/fim-de-jogo" style={styles.link}>Fim de jogo</Link>
-      <Link href="/recompensa" style={styles.link}>Recompensa</Link>
-      <Link href="/buscar" style={styles.link}>Buscar</Link>
+    <View style={styles.root}>
+      <StatusBar translucent={false} backgroundColor="#0D0D0D" barStyle="light-content" />
 
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Text style={styles.title}>Bem-vindo ao Senai Skill Up!</Text>
 
-
-
-
-
-
-
+        <Link href="/login" style={styles.link}>Login</Link>
+        <Link href="/cadastro" style={styles.link}>Cadastro</Link>
+        <Link href="/contato" style={styles.link}>Contato</Link>
+        <Link href="/suporte" style={styles.link}>Suporte</Link>
+        <Link href="/termos" style={styles.link}>Termos</Link>
+        <Link href="/jogo" style={styles.link}>Jogo</Link>
+        <Link href="/Redefinicao-Senha" style={styles.link}>Nova Senha</Link>
+        <Link href="/Recuperacao-Email" style={styles.link}>Recuperação de Email</Link>
+        <Link href="/Sem-Conexao" style={styles.link}>Sem Conexão</Link>
+        <Link href="/home" style={styles.link}>Home</Link>
+        <Link href="/perfil" style={styles.link}>Perfil</Link>
+        <Link href="/sala" style={styles.link}>Sala</Link>
+        <Link href="/game-pin" style={styles.link}>Game PIN</Link>
+        <Link href="/verified" style={styles.link}>Verificado</Link>
+        <Link href="/error" style={styles.link}>Erro</Link>
+        <Link href="/aguardando" style={styles.link}>Aguardando</Link>
+        <Link href="/criar-sala" style={styles.link}>Criar Sala</Link>
+        <Link href="/partida" style={styles.link}>Partida</Link>
+        <Link href="/fim-de-jogo" style={styles.link}>Fim de Jogo</Link>
+        <Link href="/recompensa" style={styles.link}>Recompensa</Link>
+        <Link href="/buscar" style={styles.link}>Buscar</Link>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 24, marginBottom: 20 },
-  link: { fontSize: 18, color: '#007BFF', marginVertical: 10 },
+  root: {
+    flex: 1,
+    backgroundColor: '#0D0D0D', // cor de fundo global
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  title: {
+    color: '#fff',
+    fontSize: 24,
+    marginBottom: 20,
+  },
+  link: {
+    fontSize: 18,
+    color: '#f50606',
+    marginVertical: 10,
+  },
 });

@@ -18,8 +18,6 @@ const ContatoStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffff',
-    borderWidth: 3,
-    borderColor: '#00ABFF',
   },
   // --- Título da Página ---
   newTitleContainer: {

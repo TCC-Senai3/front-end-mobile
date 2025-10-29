@@ -33,11 +33,8 @@ const CustomHeader = ({
   });
 
   const menuItems = [
-    { name: 'Início', path: '/' }, 
-    { name: 'Termos', path: '/termos' },
-    { name: 'Contato', path: '/contato' },
-    { name: 'Minha Conta', path: '/' },
-    { name: 'Usuario', path: '/' },
+    { name: 'Início', path: '/' }, { name: 'Termos', path: '/termos' },{ name: 'Contato', path: '/contato' },
+    { name: 'Minha Conta', path: '/' },{ name: 'Usuario', path: '/' },
     { name: 'Sair' },
   ];
 

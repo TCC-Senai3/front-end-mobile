@@ -33,6 +33,7 @@ export default function TermosScreen() {
               <ScrollView 
                 showsVerticalScrollIndicator={true} 
                 persistentScrollbar={true}
+                scrollIndicatorInsets={{ right: -20 }}
               >
                 <TermosContent />
               </ScrollView>

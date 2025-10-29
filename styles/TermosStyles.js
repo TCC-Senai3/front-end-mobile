@@ -66,7 +66,9 @@ const styles = StyleSheet.create({
     lineHeight: height * 0.03,
     marginBottom: height * 0.015,
     fontFamily: 'Poppins-Regular',
+    textAlign: 'left'
   },
+  
 });
 
 export default styles;
