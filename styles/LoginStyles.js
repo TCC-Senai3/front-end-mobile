@@ -1,5 +1,7 @@
+// styles/LoginStyles.js
 import { StyleSheet, Dimensions } from 'react-native';
 
+// --- GARANTIR QUE ISTO ESTÁ AQUI ---
 const { height, width } = Dimensions.get('window');
 
 const Cores = {
@@ -49,7 +51,7 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: width * 0.07,
-    paddingTop: height * 0.2,
+    paddingTop: height * 0.2, // (Valor que tínhamos antes)
     paddingBottom: height * 0.05,
     zIndex: 1,
   },
@@ -60,7 +62,7 @@ export default StyleSheet.create({
     textAlign: 'center',
     marginBottom: height * 0.04,
   },
-  input: {
+  input: { // Usado para Email/Usuário
     width: '100%',
     height: height * 0.06,
     backgroundColor: '#F0F0F0',
@@ -71,7 +73,7 @@ export default StyleSheet.create({
     fontSize: height * 0.02,
     color: Cores.textoInput,
   },
-  inputContainer: {
+  inputContainer: { // Usado para Senha
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
@@ -91,21 +93,6 @@ export default StyleSheet.create({
   eyeIcon: {
     paddingLeft: 10,
   },
-
-  // ---> ESTILOS ADICIONADOS AQUI <---
-  forgotPasswordButton: {
-    width: '100%',
-    alignItems: 'left', // Alinha o link à direita
-    marginBottom: height * 0.015, // Espaço antes da mensagem de erro
-    marginTop: -height * 0.01, // Puxa um pouco para cima, mais perto da senha
-  },
-  forgotPasswordText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: height * 0.018,
-    color: Cores.textoInput,
-  },
-  // ---> FIM DOS ESTILOS ADICIONADOS <---
-
   mainButton: {
     width: width * 0.5,
     height: height * 0.06,
@@ -150,12 +137,32 @@ export default StyleSheet.create({
     color: Cores.botaoSecundarioTexto,
     textTransform: 'uppercase',
   },
-  errorText: {
+  errorText: { // Erro geral (ex: 'Senha inválida')
     color: Cores.erro,
     fontSize: width * 0.035,
-    // marginTop: -height * 0.01, // Removido para dar espaço ao "esqueceu senha"
     marginBottom: height * 0.015,
     textAlign: 'center',
     width: '100%',
+    fontFamily: 'Poppins-Regular',
   },
+  fieldErrorText: { // Erro de campo (ex: 'Preencha este campo')
+    color: Cores.erro,
+    fontSize: width * 0.032,
+    marginTop: 6,
+    marginBottom: height * 0.01,
+    width: '100%',
+    textAlign: 'left',
+    fontFamily: 'Poppins-Regular',
+  },
+  forgotPasswordButton: {
+    width: '100%',
+    alignItems: 'flex-start',
+    marginBottom: height * 0.015,
+    marginTop: -height * 0.01,
+  },
+  forgotPasswordText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: height * 0.018,
+    color: Cores.textoInput,
+  }, // <<< CORRIGIDO: Removido o '}' extra e adicionada vírgula
 });

@@ -9,24 +9,23 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
-  SafeAreaView, // Importação do SafeAreaView
   ActivityIndicator
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
-import { useRouter, Link } from 'expo-router';
+import { Link } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import styles from '../styles/LoginStyles';
 import CustomHeader from '../components/CustomHeader';
 
 export default function LoginScreen() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSenhaVisivel, setSenhaVisivel] = useState(false);
 
+  // Carregamento de fontes (movido para _layout.js seria o ideal)
   const [fontsLoaded] = useFonts({
     'Poppins-Bold': require('../assets/fonts/Poppins/Poppins-Bold.ttf'),
     'Poppins-Regular': require('../assets/fonts/Poppins/Poppins-Regular.ttf'),
@@ -41,26 +40,31 @@ export default function LoginScreen() {
     Animated.timing(colorAnimation, {
       toValue: isHovered ? 1 : 0,
       duration: 200,
-      useNativeDriver: false, // backgroundColor não suportado
+      useNativeDriver: false,
     }).start();
   }, [isHovered]);
 
   const onPressIn = () => {
-    Animated.spring(scaleValue, { toValue: 0.95, useNativeDriver: true }).start();
+    Animated.spring(scaleValue, {
+      toValue: 0.95,
+      useNativeDriver: false,
+    }).start();
     setIsHovered(true);
   };
 
   const onPressOut = () => {
-    Animated.spring(scaleValue, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }).start();
+    Animated.spring(scaleValue, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: false,
+    }).start();
     setIsHovered(false);
   };
 
-  const inputRange = [0, 1];
-  const outputRange = ['#17ABF8', '#118ACB'];
-
   const animatedBackgroundColor = colorAnimation.interpolate({
-    inputRange: inputRange,
-    outputRange: outputRange
+    inputRange: [0, 1],
+    outputRange: ['#17ABF8', '#118ACB'],
   });
 
   const animatedButtonStyle = {
@@ -70,28 +74,28 @@ export default function LoginScreen() {
 
   // --- Lógica de Login ---
   const handleLogin = async () => {
-    setErro('');
-    if (!email || !senha) {
-      setErro('Preencha usuário/email e senha.');
+    if (!email.trim() || !senha.trim()) {
+      setErro('Por favor, preencha todos seus campos');
       return;
     }
+
+    // (Lógica igual à da tela de cadastro)
+    if (senha.length < 6) {
+      setErro('A senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+    setErro('');
     setIsLoading(true);
 
-    const emailValido = /\S+@\S+\.\S+/;
-    if (!emailValido.test(email)) {
-      setErro('Por favor, insira um email válido.');
-      setIsLoading(false);
-      return;
-    }
-
-    // Simulação de login
-    console.log('Tentando logar com:', email);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    if (email.toLowerCase() === 'teste@teste.com' && senha === '123456') {
-      router.replace('/jogo'); // Navega para a tela principal
-    } else {
-      setErro('Usuário/Email ou senha inválidos.');
+    try {
+      // Sua lógica de autenticação aqui (API, fetch, etc)
+      // Exemplo fictício:
+      // const response = await api.login({ email, senha });
+      // if (!response.success) setErro('Login ou senha incorretos');
+      // else prossiga com o login...
+    } catch (error) {
+      setErro('Erro ao tentar realizar login. Tente novamente mais tarde.');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -100,29 +104,28 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <CustomHeader
         showMenu={true}
-        menuPosition='left'
-        closeButtonSide='right'
-        headerStyle='solid'
+        menuPosition="left"
+        closeButtonSide="right"
+        headerStyle="solid"
       />
-
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           <View style={styles.backgroundEllipse} />
-
           <View style={styles.content}>
             <Text style={styles.title}>Login</Text>
             <TextInput
-              placeholder="Nome de Usuario ou Email"
+              placeholder="Nome de Usuário ou Email"
               style={styles.input}
               placeholderTextColor="#919191"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={text => {
+                setEmail(text);
+                setErro('');
+              }}
               keyboardType="email-address"
               autoCapitalize="none"
               returnKeyType="next"
             />
-
-            {/* Container para o campo de senha com ícone */}
             <View style={styles.inputContainer}>
               <TextInput
                 placeholder="Senha"
@@ -130,7 +133,10 @@ export default function LoginScreen() {
                 secureTextEntry={!isSenhaVisivel}
                 placeholderTextColor="#919191"
                 value={senha}
-                onChangeText={setSenha}
+                onChangeText={text => {
+                  setSenha(text);
+                  setErro('');
+                }}
                 returnKeyType="go"
                 onSubmitEditing={handleLogin}
               />
@@ -138,16 +144,12 @@ export default function LoginScreen() {
                 <Feather name={isSenhaVisivel ? 'eye-off' : 'eye'} size={24} color="#919191" />
               </TouchableOpacity>
             </View>
-
-            {/* ---> Link "Esqueceu sua senha?" ADICIONADO AQUI <--- */}
             <Link href="/esqueci-senha" asChild>
               <TouchableOpacity style={styles.forgotPasswordButton}>
                 <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
               </TouchableOpacity>
             </Link>
-
             {erro ? <Text style={styles.errorText}>{erro}</Text> : null}
-
             <Animated.View style={[styles.mainButton, animatedButtonStyle]}>
               <Pressable
                 onPressIn={onPressIn}
@@ -156,11 +158,14 @@ export default function LoginScreen() {
                 disabled={isLoading}
                 style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}
               >
-                {isLoading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.mainButtonText}>LOGIN</Text>}
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.mainButtonText}>LOGIN</Text>
+                )}
               </Pressable>
             </Animated.View>
           </View>
-
           <View style={styles.footer}>
             <Text style={styles.footerText}>Não está cadastrado?</Text>
             <Link href="/cadastro" asChild>
