@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import styles from '../styles/JogoStyles'; // Usaremos o novo estilo unificado
 import MedalhaIcon from '../components/icons/MedalhaIcon';
 import OndasIcon from '../components/icons/OndasIcon';
@@ -19,6 +20,7 @@ const cardData = [
 
 // O seu código original de JogoScreen, agora como um componente exportável
 export default function JogoSection() {
+  const router = useRouter();
   const scrollRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const cardWidth = width * 0.75 + (width - width * 0.75);
@@ -34,6 +36,14 @@ export default function JogoSection() {
     if (activeIndex > 0) {
       const newIndex = activeIndex - 1;
       scrollRef.current.scrollTo({ x: (activeIndex - 1) * cardWidth, animated: true });
+    }
+  };
+
+  const handleCardPress = (cardType) => {
+    if (cardType === 'criar-sala') {
+      router.push('/criar-sala');
+    } else if (cardType === 'sala-privada') {
+      router.push('/game-pin');
     }
   };
 
@@ -70,7 +80,10 @@ export default function JogoSection() {
                         </View>
                           {card.type === 'criar-sala' && (<AddIcon style={styles.cardIconImage} />)}
                         {card.type === 'sala-privada' && (<LivroIcon style={styles.cardLivrosImage} />)}
-                        <TouchableOpacity style={[styles.cardButton, card.type === 'sala-privada' && styles.buttonPrivada]}>
+                        <TouchableOpacity 
+                            style={[styles.cardButton, card.type === 'sala-privada' && styles.buttonPrivada]}
+                            onPress={() => handleCardPress(card.type)}
+                        >
                             <Text style={styles.cardButtonText}>{card.buttonText}</Text>
                         </TouchableOpacity>
                     </View>

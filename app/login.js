@@ -13,12 +13,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import styles from '../styles/LoginStyles';
 import CustomHeader from '../components/CustomHeader';
 
 export default function LoginScreen() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
@@ -93,6 +94,9 @@ export default function LoginScreen() {
       // const response = await api.login({ email, senha });
       // if (!response.success) setErro('Login ou senha incorretos');
       // else prossiga com o login...
+      
+      // Navegação para a tela de jogo após login bem-sucedido
+      router.push('/jogo');
     } catch (error) {
       setErro('Erro ao tentar realizar login. Tente novamente mais tarde.');
     } finally {

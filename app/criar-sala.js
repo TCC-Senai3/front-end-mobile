@@ -14,8 +14,8 @@ export default function CriarSalaScreen() {
     if (titulo.trim()) {
       // Aqui você pode adicionar a lógica para criar a sala
       console.log('Criando sala com título:', titulo);
-      // Navegar para próxima tela ou voltar
-      router.back();
+      // Navegar para a tela de sala
+      router.push('/sala');
     }
   };
 

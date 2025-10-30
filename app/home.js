@@ -87,7 +87,7 @@ export default function HomeScreen() {
             
           </View>
           <View style={styles.ctaButtonsContainer}>
-            <Link href="/game-pin" asChild>
+            <Link href="/login" asChild>
               <TouchableOpacity style={styles.ctaButton}>
                 <Text style={styles.ctaButtonText}>Entrar</Text>
               </TouchableOpacity>

@@ -34,7 +34,7 @@ export default function PartidaScreen() {
   };
 
   const handleExit = () => {
-    router.back();
+    router.push('/jogo');
   };
 
   return (

@@ -52,7 +52,7 @@ export default function Sala() {
             <Text style={styles.desmancharText}>DESMANCHAR</Text>
           </TouchableOpacity>
           <View style={{ flex: 1, alignItems: 'flex-end' }}>
-            <TouchableOpacity style={styles.iniciarBtn}>
+            <TouchableOpacity style={styles.iniciarBtn} onPress={() => router.push('/partida')}>
               <Text style={styles.iniciarText}>INICIAR</Text>
             </TouchableOpacity>
           </View>
