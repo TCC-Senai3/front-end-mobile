@@ -18,7 +18,7 @@ import { UserIcon } from '../components/icons/icon';
 const { width, height } = Dimensions.get('window');
 
 // Mock de usuários para exibição na tela
-const MOCK_PLAYERS = Array.from({ length: 6 }, (_, index) => ({
+const MOCK_PLAYERS = Array.from({ length: 12 }, (_, index) => ({
   id: index + 1,
   name: 'Usuário',
 }));

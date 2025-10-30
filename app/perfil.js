@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Dimensions, ScrollView, ImageBackground } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Dimensions, ScrollView, ImageBackground, TextInput } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { UserIcon, MedalhaIcon, RankingIcon, Trofeu1Icon } from '../components/icons/icon';
+import Userprofile2Icon from '../components/icons/Userprofile2Icon';
 
 const { width } = Dimensions.get('window');
 
@@ -10,13 +11,16 @@ export default function PerfilScreen() {
   const router = useRouter();
 
   // Dados mockados (substituir quando houver backend)
-  const profile = {
+  // Passar para estado para editar depois
+  const [profile, setProfile] = useState({
     name: 'Usuario200',
     email: 'usuario200@gmail.com',
     rankPosition: 1,
     points: 200,
     bio: 'texto limitado a uma quantidade de caracteres',
-  };
+  });
+  const [editingBio, setEditingBio] = useState(false);
+  const [bioDraft, setBioDraft] = useState(profile.bio);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -39,7 +43,8 @@ export default function PerfilScreen() {
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarCircle}>
               {/* Avatar do perfil (ícone) */}
-              <UserIcon style={styles.avatarImage} width={80} height={80} />
+              <Userprofile2Icon width={100} height={100} style={{ borderRadius: 50 }} />
+              
               <View style={styles.statusDot} />
             </View>
             <Text style={styles.name}>{profile.name}</Text>
@@ -76,12 +81,39 @@ export default function PerfilScreen() {
             </View>
             <View style={styles.gridCardWide}>
               <Text style={styles.sectionLabel}>BIOGRAFIA</Text>
-              <Text style={styles.bioText}>{profile.bio}</Text>
+              {editingBio ? (
+                <>
+                  <TextInput
+                    value={bioDraft}
+                    style={[styles.bioText, {backgroundColor: '#fff', color: '#333', padding: 8, borderRadius: 8}]}
+                    onChangeText={setBioDraft}
+                    maxLength={120}
+                    multiline
+                    autoFocus
+                  />
+                  <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 8 }}>
+                    <TouchableOpacity onPress={() => {
+                      setProfile({ ...profile, bio: bioDraft });
+                      setEditingBio(false);
+                    }} style={{ marginRight: 16, backgroundColor: '#00A9FF', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 }}>
+                      <Text style={{ color: 'white', fontFamily: 'Poppins-Medium' }}>Salvar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => {
+                      setBioDraft(profile.bio);
+                      setEditingBio(false);
+                    }} style={{ backgroundColor: '#E9E9E9', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 }}>
+                      <Text style={{ color: '#2F2E2E', fontFamily: 'Poppins-Medium' }}>Cancelar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : (
+                <Text style={styles.bioText}>{profile.bio}</Text>
+              )}
             </View>
           </View>
 
           <View style={styles.footerRow}>
-            <TouchableOpacity style={styles.editButton}>
+            <TouchableOpacity style={styles.editButton} onPress={() => setEditingBio(true)}>
               <Feather name="edit-2" size={16} color="#2F2E2E" />
             </TouchableOpacity>
           </View>
@@ -95,8 +127,8 @@ const CARD_BG = '#FFFFFF';
 const PAGE_BG = '#2B2B2B';
 const PRIMARY = '#00A9FF';
 const TEXT_DARK = '#2F2E2E';
-const TEXT_MUTED = '#6B6B6B';
-const TILE_BG = '#EEEEEE';
+const TEXT_MUTED = '#626361';
+const TILE_BG = '#D9D9D9';
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: PAGE_BG },
@@ -133,7 +165,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarImage: { width: 80, height: 80 },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    overflow: 'hidden',
+  },
   statusDot: {
     position: 'absolute',
     right: 6,

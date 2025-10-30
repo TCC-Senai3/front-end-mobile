@@ -54,7 +54,7 @@ export default function FimDeJogoScreen() {
                 {getTrophyIcon(item.rank)}
                 <View style={styles.playerCard}>
                   <View style={styles.avatarContainer}>
-                    <PerfilIcon width={width * 0.18} height={width * 0.18} style={styles.avatar} />
+                    <PerfilIcon width={width -409} height={width -343} style={[styles.avatar, { transform: [{ scale: 2.0 }] }]} />
                   </View>
                   <Text style={styles.username}>{item.username}</Text>
                 </View>
@@ -96,6 +96,7 @@ const styles = StyleSheet.create({
   rankingContainer: {
     width: '100%',
     alignItems: 'center',
+    overflow: 'visible',
   },
   rankItem: {
     alignItems: 'center',
@@ -104,12 +105,14 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     paddingHorizontal: 10,
     paddingTop: 30,
+    overflow: 'visible',
   },
   cardContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
     marginBottom: 10,
+    overflow: 'visible',
   },
   trophyIcon: {
     marginRight: 20,
@@ -122,21 +125,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.8,
     shadowRadius: 12,
     elevation: 3,
     minHeight: 60,
     position: 'relative',
+    overflow: 'visible',
   },
   avatarContainer: {
     position: 'absolute',
-    top: -40,
-    borderRadius: (width * 0.16) / 2,
-    padding: 2,
-    zIndex: 1,
+    top: -50,
+    width: width * 0.50,
+    height: width * 0.50,
+    borderRadius: (width * 0.50) / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0,
+    zIndex: 99,
   },
   avatar: {
-    borderRadius: (width * 0.16) / 2,
+    borderRadius: (width * 0.50) / 2,
   },
   username: {
     fontSize: 16,

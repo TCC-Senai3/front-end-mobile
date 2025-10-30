@@ -17,6 +17,8 @@ import OndavermelhaIcon from '../components/icons/OndavermelhaIcon';
 import CruzIcon from '../components/icons/CruzIcon';
 import OndaverdeIcon from '../components/icons/OndaverdeIcon';
 import InterrogacaoIcon from '../components/icons/InterrogacaoIcon';
+import IlustracaoIcon from '../components/icons/IlustracaoIcon';
+import CorretoIcon from '../components/icons/CorretoIcon';
 const { width } = Dimensions.get('window');
 
 export const options = {
