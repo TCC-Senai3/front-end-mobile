@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "SenaiSkillUp",
-    "slug": "SenaiSkillUp",
+    "slug": "tcc",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "scheme": "senaiskillup",
+    "icon": "./assets/placa.png",
+    "scheme": "Senaiskillup",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,16 +13,15 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/placa.png"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.leycon.SenaiSkillUp"
+      "package": "com.leycon05.tcc"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/icon.png"
+      "favicon": "./assets/placa.png"
     },
     "plugins": [
       "expo-router",
@@ -42,15 +41,15 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "564c92f1-0250-4b89-816b-c59825b00e33"
+        "projectId": "b8585542-4e46-439c-bfc4-a90e74ed5091"
       }
     },
-    "owner": "leycon",
+    "owner": "leycon05",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/564c92f1-0250-4b89-816b-c59825b00e33"
+      "url": "https://u.expo.dev/b8585542-4e46-439c-bfc4-a90e74ed5091"
     }
   }
 }
