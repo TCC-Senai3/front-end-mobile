@@ -126,13 +126,9 @@ const styles = StyleSheet.create({
         height: 62,
         resizeMode: 'contain',
     },
-    cardMedalImage: {
-        width: width * 0.20,
-        height: width * 0.20,
-        resizeMode: 'contain',
-    },
+    
     cardLivrosImage: {
-        width: width * 0.20,
+        width: width * 0.20, 
         height: width * 0.20,
         resizeMode: 'contain',
     },

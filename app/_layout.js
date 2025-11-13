@@ -24,5 +24,12 @@ export default function Layout() {
     return null;
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack screenOptions={{
+      headerShown: false,
+      animation: "none", // Desabilita qualquer animação padrão de slide/fade
+      presentation: "transparentModal", // Ajuda a evitar sobreposição visual indesejada
+      gestureEnabled: false, // Desabilita o gesto de voltar por swipe
+    }} />
+  );
 }
