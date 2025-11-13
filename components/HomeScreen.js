@@ -7,7 +7,7 @@ const HomeScreen = () => {
     <SafeAreaView style={styles.screenContainer}>
       <View style={styles.topBar}>
         <View style={{ flexGrow: 1 }} />
-        <Feather name="menu" size={32} color="#FFFFFF" />
+        <Feather name="menu" size={32} color="#FF" />
       </View>
 
       <Ionicons name="checkmark-circle" size={120} color="#34C759" style={{ marginTop: 40 }} />

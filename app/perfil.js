@@ -220,5 +220,3 @@ const styles = StyleSheet.create({
     backgroundColor: '#E9E9E9',
   },
 });
-
-

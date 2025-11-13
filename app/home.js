@@ -13,12 +13,8 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
-import OndavermelhaIcon from '../components/icons/OndavermelhaIcon';
-import CruzIcon from '../components/icons/CruzIcon';
-import OndaverdeIcon from '../components/icons/OndaverdeIcon';
+import HomeIcon from '../components/icons/HomeIcon';
 import InterrogacaoIcon from '../components/icons/InterrogacaoIcon';
-import IlustracaoIcon from '../components/icons/IlustracaoIcon';
-import CorretoIcon from '../components/icons/CorretoIcon';
 const { width } = Dimensions.get('window');
 
 export const options = {
@@ -27,11 +23,12 @@ export const options = {
 
 export default function HomeScreen() {
   const featureSections = [
+    // ... (suas seções continuam iguais)
     {
       icon: { uri: 'https://c.animaapp.com/mesh3yq5uHbvsH/img/trophy-1.png' },
       title: 'Desafie-se',
       description:
-        'O Senai Skill Up é um jogo de perguntas e respostas que torna o aprendizado no SENAI mais dinâmico. Os alunos testam conhecimentos, competem e interagem com professores de forma divertida!',
+        'O Senai Skill Up é um jogo de perguntas e respostas que torna o aprendizado no SENAI mais dinâmICO. Os alunos testam conhecimentos, competem e interagem com professores de forma divertida!',
     },
     {
       icon: { uri: 'https://c.animaapp.com/mesh3yq5uHbvsH/img/game-controller-1.png' },
@@ -63,27 +60,24 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* HERO com fundo azul e ilustração */}
         <View style={styles.heroWrapper}>
-          {/* Ilustração centralizada igual ao design */}
-          <View style={styles.illustrationContainer}>
-            <IlustracaoIcon width={210} height={170} style={styles.heroImage} />
-            {/* Ícones dentro do papel */}
-            <CruzIcon width={25} height={20} style={styles.cruzIcon1} />
-            <OndavermelhaIcon width={35} height={35} style={styles.ondaVermelha1} />
-            <CruzIcon width={20} height={20} style={styles.cruzIcon2} />
-            <OndavermelhaIcon width={35} height={35} style={styles.ondaVermelha2} />
-            <CorretoIcon width={40} height={40} style={styles.corretoIcon} />
-            <OndaverdeIcon width={60} height={40} style={styles.ondaVerde} />
-          </View>
+        
           <View style={styles.heroTexts}>
+            {/* // 2. ADICIONADO AQUI DENTRO DO HERO */}
+            
+            {/* // 
+            // CORREÇÃO AQUI: A cor foi movida do 'style' para uma 'prop'
+            // */}
+            <HomeIcon width={238} height={210} color="#FFFFFF" style={styles.heroIcon} /> 
+
             <View style={styles.heroTitleRow}>
               <Text style={[styles.heroTitle, styles.heroTitleBold]}>SENAI</Text>
               <Text style={styles.heroTitle}> SKILL–UP</Text>
             </View>
             <Text style={styles.heroSubtitle}>
-             Desafie-se jogando o nosso{'\n'}
-             jogo de perguntas exclusivo{'\n'}
-             para os cursos do <Text style={styles.heroSubtitleBold}>SENAI</Text>
-             </Text>
+              Desafie-se jogando o nosso{'\n'}
+              jogo de perguntas exclusivo{'\n'}
+              para os cursos do <Text style={styles.heroSubtitleBold}>SENAI</Text>
+            </Text>
             
           </View>
           <View style={styles.ctaButtonsContainer}>
@@ -158,55 +152,19 @@ const styles = StyleSheet.create({
   heroWrapper: {
     backgroundColor: '#2E96F1',
     alignItems: 'center',
-    paddingTop: 24,
+    paddingTop: 20,
     paddingBottom: 28,
   },
-  illustrationContainer: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 40,
+  // 3. ESTILO CORRIGIDO
+  heroIcon: {
+    // color: '#FFFFFF', // Removido daqui
+    marginBottom: 16, // Adiciona um espaço abaixo do ícone
   },
-  heroImage: { width: width * 0.6, height: width * 0.6 },
-  
-  // Ícones dentro do papel
-  cruzIcon1: {
-    position: 'absolute',
-    top: '25%',
-    left: '15%',
-    transform: [{ translateX: -14 }, { translateY: -14 }],
+  heroTexts: { 
+    alignItems: 'center', 
+    // marginTop: 24, // Removido pois o wrapper já tem paddingTop
+    paddingHorizontal: 24 
   },
-  ondaVermelha1: {
-    position: 'absolute',
-    top: '25%',
-    left: '25%',
-    transform: [{ translateX: -27 }, { translateY: -27 }],
-  },
-  cruzIcon2: {
-    position: 'absolute',
-    top: '45%',
-    left: '15%',
-    transform: [{ translateX: -14 }, { translateY: -14 }],
-  },
-  ondaVermelha2: {
-    position: 'absolute',
-    top: '45%',
-    left: '25%',
-    transform: [{ translateX: -27 }, { translateY: -27 }],
-  },
-  corretoIcon: {
-    position: 'absolute',
-    top: '65%',
-    left: '15%',
-    transform: [{ translateX: -14 }, { translateY: -14 }],
-  },
-  ondaVerde: {
-    position: 'absolute',
-    top: '65%',
-    left: '25%',
-    transform: [{ translateX: -28 }, { translateY: -28 }],
-  },
-  heroTexts: { alignItems: 'center', marginTop: 24, paddingHorizontal: 24 },
   heroTitleRow: { flexDirection: 'row', alignItems: 'baseline' },
   heroTitle: { color: '#FFFFFF', fontSize: 32, fontFamily: 'Poppins-Medium' },
   heroTitleBold: { fontFamily: 'Blinker-Bold', fontSize: 36 },
