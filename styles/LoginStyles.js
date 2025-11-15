@@ -72,6 +72,7 @@ export default StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: height * 0.02,
     color: Cores.textoInput,
+
   },
   inputContainer: { // Usado para Senha
     width: '100%',
@@ -82,6 +83,7 @@ export default StyleSheet.create({
     marginBottom: height * 0.02,
     paddingHorizontal: 20,
     height: height * 0.06,
+
   },
   inputSenha: {
     flex: 1,
@@ -89,6 +91,8 @@ export default StyleSheet.create({
     fontSize: height * 0.02,
     color: Cores.textoInput,
     height: '100%',
+    alignSelf: 'center',
+
   },
   eyeIcon: {
     paddingLeft: 10,
@@ -107,6 +111,8 @@ export default StyleSheet.create({
     fontSize: height * 0.02,
     color: Cores.textoBranco,
     textTransform: 'uppercase',
+    alignSelf: 'center',
+
   },
   footer: {
     width: '100%',

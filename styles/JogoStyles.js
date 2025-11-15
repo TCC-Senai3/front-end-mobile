@@ -44,6 +44,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
+        
     },
     waveImage: {
         width: '100%',
@@ -90,6 +91,8 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 60,
         borderBottomLeftRadius: 60,
         borderBottomRightRadius: 30,
+        elevation: 10,
+        
     },
     cardRanqueado: {
         backgroundColor: Cores.cardRanqueadoFundo
@@ -218,7 +221,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
         shadowRadius: 10,
-        height: height * 0.65, // <-- ALTURA FIXA RESTAURADA
+        height: height * 0.85, // <-- ALTURA FIXA RESTAURADA
     },
     bannerImage: {
         width: width * 0.7,
@@ -236,12 +239,12 @@ const styles = StyleSheet.create({
     searchInput: {
         flex: 1,
         height: 50,
-        fontSize: width * 0.04,
+        fontSize: width * 0.035,
         fontFamily: 'Poppins-Regular',
         backgroundColor: Cores.branco,
         borderRadius: 50,
         paddingHorizontal: 20,
-        elevation: 3,
+        elevation: 10,
         paddingRight: 50,
     },
     searchIcon: {
@@ -325,7 +328,7 @@ const styles = StyleSheet.create({
         marginTop: 40,
         borderRadius: 20,
         backgroundColor: Cores.fundoQuestionario,
-        paddingTop: 45,
+        paddingTop: 50,
         paddingBottom: 20,
         paddingHorizontal: 20,
         elevation: 8,

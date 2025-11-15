@@ -191,7 +191,7 @@ export default function LoginScreen() {
                 <Feather name={isSenhaVisivel ? 'eye-off' : 'eye'} size={24} color="#919191" />
               </TouchableOpacity>
             </View>
-            <Link href="/esqueci-senha" asChild>
+            <Link href="/Redefinicao-Senha" asChild>
               <TouchableOpacity style={styles.forgotPasswordButton}>
                 <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
               </TouchableOpacity>
