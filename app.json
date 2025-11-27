@@ -33,7 +33,8 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
@@ -45,9 +46,10 @@
       }
     },
     "owner": "leycon05",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+
+    
+    "runtimeVersion": "1.0.0",
+
     "updates": {
       "url": "https://u.expo.dev/b8585542-4e46-439c-bfc4-a90e74ed5091"
     }
