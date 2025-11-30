@@ -1,52 +1,72 @@
 // components/QuestionarioSection.js
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import styles from '../styles/JogoStyles';
 import QuestionariosBannerIcon from '../components/icons/QuestionariosBannerIcon';
 import BuscaIcon from '../components/icons/BuscaIcon';
-// O QuizCardIcon não é mais necessário aqui, já que a imagem foi removida do seu layout original
-// import QuizCardIcon from '../components/icons/QuizCardIcon'; 
 
-// Dados de exemplo
-const quizzesData = [
-    { id: '1', title: 'Hardware', description: '10 Questões | Valendo 100 Pontos' },
-    { id: '2', title: 'Software', description: '10 Questões | Valendo 100 Pontos' },
-    { id: '3', title: 'Redes', description: '10 Questões | Valendo 100 Pontos' },
-    { id: '4', title: 'Segurança', description: '10 Questões | Valendo 100 Pontos' },
-    { id: '5', title: 'Backend', description: '10 Questões | Valendo 100 Pontos' },
-    { id: '6', title: 'Frontend', description: '10 Questões | Valendo 100 Pontos' },
-];
+import { getQuestionarios } from '../services/formulariosService';
 
 export default function QuestionarioSection() {
   const [searchText, setSearchText] = useState('');
-  const [filteredQuizzes, setFilteredQuizzes] = useState(quizzesData);
+  const [quizzes, setQuizzes] = useState([]);               // ← dados da API
+  const [filteredQuizzes, setFilteredQuizzes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  // 🔥 Carregar dados da API
   useEffect(() => {
-    if (searchText) {
-      const newData = quizzesData.filter(item => {
-        const itemData = item.title ? item.title.toUpperCase() : ''.toUpperCase();
-        const textData = searchText.toUpperCase();
-        return itemData.indexOf(textData) > -1;
-      });
-      setFilteredQuizzes(newData);
-    } else {
-      setFilteredQuizzes(quizzesData);
+    carregarQuestionarios();
+  }, []);
+
+  const carregarQuestionarios = async () => {
+    try {
+      const data = await getQuestionarios();
+
+      // Transformar o formato da API → formato usado na tela
+      const listaFormatada = data.map((form) => ({
+        id: form.idFormulario,
+        title: form.titulo,
+        description: `${form.perguntas.length} questões`,
+      }));
+
+      setQuizzes(listaFormatada);
+      setFilteredQuizzes(listaFormatada);
+
+    } catch (error) {
+      console.error("Erro ao carregar questionários:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [searchText]);
-  
-  // Função que será chamada ao clicar no card
+  };
+
+  // 🔎 Filtro de pesquisa
+  useEffect(() => {
+    if (searchText.trim() === '') {
+      setFilteredQuizzes(quizzes);
+      return;
+    }
+
+    const texto = searchText.toUpperCase();
+
+    const filtrados = quizzes.filter(q =>
+      q.title.toUpperCase().includes(texto)
+    );
+
+    setFilteredQuizzes(filtrados);
+  }, [searchText, quizzes]);
+
+  // Quando clicar no card
   const handleStartQuiz = (quizTitle) => {
-    // AQUI você adicionará a lógica para navegar para a tela do quiz
     console.log(`Iniciando o quiz: ${quizTitle}`);
-    // Exemplo de como seria com navegação (você precisará do hook useNavigation):
-    // navigation.navigate('TelaDoQuiz', { quizId: quiz.id });
   };
 
   return (
     <View style={styles.questionarioFrame}>
+
       <QuestionariosBannerIcon style={styles.quizTitleBanner} />
-      
+
+      {/* Campo de Busca */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -58,38 +78,40 @@ export default function QuestionarioSection() {
         <BuscaIcon style={styles.searchIcon} />
       </View>
 
-      <View style={{ flex: 1 }}>
-        {filteredQuizzes.length > 0 ? (
-          <ScrollView 
-            style={styles.quizListContainer} 
-            nestedScrollEnabled={true}
-          >
-            {filteredQuizzes.map((quiz) => (
-              // --- ALTERAÇÃO AQUI ---
-              // O <View> virou um <TouchableOpacity>
-              <TouchableOpacity 
-                key={quiz.id} 
-                style={[styles.quizCard]}
-                onPress={() => handleStartQuiz(quiz.title)} // Ação de clique adicionada
-                activeOpacity={0.7} // Efeito visual ao clicar
-              >
-                <View style={styles.quizCardTextContainer}>
-                  <Text style={[styles.quizCardTitle]}>
-                    {quiz.title}
-                  </Text>
-                  <Text style={[styles.quizCardDescription]}>
-                    {quiz.description}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        ) : (
-          <View style={styles.searchEmptyContainer}>
-            <Text style={styles.searchEmptyText}>Nenhum questionário encontrado</Text>
-          </View>
-        )}
-      </View>
+      {/* LOADING */}
+      {loading && (
+        <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />
+      )}
+
+      {/* LISTA */}
+      {!loading && (
+        <View style={{ flex: 1 }}>
+          {filteredQuizzes.length > 0 ? (
+            <ScrollView
+              style={styles.quizListContainer}
+              nestedScrollEnabled={true}
+            >
+              {filteredQuizzes.map((quiz) => (
+                <TouchableOpacity
+                  key={quiz.id}
+                  style={styles.quizCard}
+                  onPress={() => handleStartQuiz(quiz.title)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.quizCardTextContainer}>
+                    <Text style={styles.quizCardTitle}>{quiz.title}</Text>
+                    <Text style={styles.quizCardDescription}>{quiz.description}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.searchEmptyContainer}>
+              <Text style={styles.searchEmptyText}>Nenhum questionário encontrado</Text>
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 }
