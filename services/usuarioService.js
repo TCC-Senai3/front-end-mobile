@@ -7,7 +7,9 @@ const handleErrors = (error) => {
   return error.response?.data?.message || error.message || "Erro desconhecido";
 };
 
+// =============================
 // LOGIN
+// =============================
 export async function loginUsuario(email, senha) {
   try {
     const response = await api.post("/usuarios/login", { email, senha });
@@ -24,7 +26,9 @@ export async function loginUsuario(email, senha) {
   }
 }
 
+// =============================
 // CADASTRO
+// =============================
 export async function cadastrarUsuario(nome, email, senha) {
   try {
     const response = await api.post("/usuarios/cadastro", { nome, email, senha });
@@ -34,7 +38,9 @@ export async function cadastrarUsuario(nome, email, senha) {
   }
 }
 
-// PERFIL (GET)
+// =============================
+// PERFIL (GET /me)
+// =============================
 export async function getMeuPerfil() {
   try {
     const response = await api.get("/usuarios/me");
@@ -45,36 +51,39 @@ export async function getMeuPerfil() {
 }
 
 // =============================
-// ATUALIZAR BIOGRAFIA (PUT)
+// BUSCAR USUÁRIO POR ID (ESSENCIAL PARA A SALA)
+// =============================
+export async function getUsuarioById(id) {
+  try {
+    const response = await api.get(`/usuarios/${id}`);
+    return response.data;
+  } catch (error) {
+    console.log(`Erro ao buscar usuário ${id}:`, error.message);
+    return null; 
+  }
+}
+
+// =============================
+// ATUALIZAÇÕES (Avatar/Bio)
 // =============================
 export async function atualizarBiografia(idUsuario, novaBiografia) {
   try {
-    const response = await api.put(`/usuarios/${idUsuario}/biografia`, { 
-      biografia: novaBiografia 
-    });
+    const response = await api.put(`/usuarios/${idUsuario}/biografia`, { biografia: novaBiografia });
     return response.data;
   } catch (error) {
     throw new Error(handleErrors(error));
   }
 }
 
-// =============================
-// ATUALIZAR AVATAR (PUT) - NOVO
-// Endpoint: /usuarios/{id}/avatar
-// =============================
 export async function atualizarAvatar(idUsuario, novoAvatar) {
   try {
-    // Envia o nome do avatar (ex: 'bode', 'pato')
-    const response = await api.put(`/usuarios/${idUsuario}/avatar`, { 
-      avatar: novoAvatar 
-    });
+    const response = await api.put(`/usuarios/${idUsuario}/avatar`, { avatar: novoAvatar });
     return response.data;
   } catch (error) {
     throw new Error(handleErrors(error));
   }
 }
 
-// ATUALIZAR PERFIL GERAL (Mantido por segurança)
 export async function atualizarPerfil(dadosAtualizados) {
   try {
     const response = await api.put("/usuarios/me", dadosAtualizados);
@@ -84,7 +93,9 @@ export async function atualizarPerfil(dadosAtualizados) {
   }
 }
 
-// LOGOUT
+// =============================
+// UTILITÁRIOS
+// =============================
 export async function logoutUsuario() {
   try {
     await SecureStore.deleteItemAsync('authToken');
@@ -94,7 +105,6 @@ export async function logoutUsuario() {
   }
 }
 
-// TOKEN
 export async function getToken() {
   try {
     return await SecureStore.getItemAsync('authToken');
@@ -103,7 +113,6 @@ export async function getToken() {
   }
 }
 
-// AVATAR POR ID
 export async function getAvatarById(userId) {
   try {
     const response = await api.get(`/usuarios/${userId}/avatar`);
@@ -113,12 +122,14 @@ export async function getAvatarById(userId) {
   }
 }
 
+// Export único organizado
 const usuarioService = {
   loginUsuario,
   cadastrarUsuario,
   getMeuPerfil,
+  getUsuarioById, // <--- Confirmado aqui
   atualizarBiografia,
-  atualizarAvatar, // <--- ADICIONADO
+  atualizarAvatar,
   atualizarPerfil,
   logoutUsuario,
   getToken,

@@ -1,11 +1,11 @@
 // services/api.js
-
 import axios from "axios";
-import * as SecureStore from 'expo-secure-store'; // Importante: Usar SecureStore aqui também
+import * as SecureStore from 'expo-secure-store';
 
 export const API_CONFIG = {
-  BASE_URL: "https://tccdrakes.azurewebsites.net", // Garanta que não tem a barra '/' no final se for concatenar depois
-  TIMEOUT: 30000,
+  // URL do seu backend no Azure
+  BASE_URL: "https://tccdrakes.azurewebsites.net",
+  TIMEOUT: 30000, // 30 segundos de timeout
 };
 
 const api = axios.create({
@@ -17,13 +17,14 @@ const api = axios.create({
   },
 });
 
-// --- INTERCEPTOR DE REQUISIÇÃO (A MÁGICA ACONTECE AQUI) ---
-// Antes de enviar o pedido, ele vai no cofre do celular, pega o token e cola no cabeçalho.
+// --- INTERCEPTOR DE REQUISIÇÃO ---
+// Antes de enviar o pedido, pega o token e coloca no cabeçalho
 api.interceptors.request.use(
   async (config) => {
     try {
       const token = await SecureStore.getItemAsync("authToken");
       if (token) {
+        // Adiciona o header Authorization: Bearer <token>
         config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (error) {
@@ -35,7 +36,7 @@ api.interceptors.request.use(
 );
 
 // --- INTERCEPTOR DE RESPOSTA ---
-// Se o token estiver vencido (Erro 401), ele limpa o cofre para forçar um novo login.
+// Se der erro 401 (token inválido/expirado), limpa os dados
 api.interceptors.response.use(
   (response) => response,
   async (error) => {

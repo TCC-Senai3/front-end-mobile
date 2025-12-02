@@ -1,12 +1,26 @@
+// services/formulariosService.js
+
 import api from './api';
 
-// Listar todos os formulários (MOBILE)
-export const getFormularios = async () => {
+// Busca todos os formulários
+export async function getQuestionarios() {
   try {
-    const response = await api.get('/formularios'); // STRING normal
+    // GET https://tccdrakes.azurewebsites.net/formularios
+    // O token é enviado automaticamente pelo interceptor do api.js
+    const response = await api.get('/formularios');
     return response.data;
   } catch (error) {
-    console.error("Erro ao listar formulários:", error);
-    throw error; // Repassa o erro para o componente tratar
+    console.error("Erro ao buscar formulários:", error);
+    throw error;
   }
-};
+}
+
+// Se precisar buscar um específico depois (exemplo)
+export async function getQuestionarioById(id) {
+  try {
+    const response = await api.get(`/formularios/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}

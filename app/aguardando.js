@@ -1,22 +1,148 @@
+// app/aguardando.js
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
-import { getPin } from '../store/pinStore';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { GameboyIcon } from '../components/icons/icon';
 import CustomHeader from '../components/CustomHeader';
+
+// --- IMPORTS DO WEBSOCKET ---
+import { Client } from '@stomp/stompjs';
+import * as TextEncoding from 'text-encoding'; // Polyfill necessário para React Native
+import usuarioService from '../services/usuarioService'; // Para pegar o ID do usuario
+
+// Hack para o STOMP funcionar no React Native
+if (!global.TextEncoder) {
+  global.TextEncoder = TextEncoding.TextEncoder;
+  global.TextDecoder = TextEncoding.TextDecoder;
+}
 
 const { width, height } = Dimensions.get('window');
 
 export default function Aguardando() {
   const router = useRouter();
-  const code = getPin();
+  
+  // Recebe parâmetros da rota (se vier da criação ou entrada de sala)
+  // Se você usa store global, pode manter o getPin(), mas params é mais seguro na navegação
+  const params = useLocalSearchParams();
+  const [codigoSala, setCodigoSala] = useState(params.codigoSala || ''); 
+  
+  const [status, setStatus] = useState('Conectando ao servidor...');
+  const stompClient = useRef(null);
+
   useEffect(() => {
-    const t = setTimeout(() => {
-      router.replace('/sala');
-    }, 4000);
-    return () => clearTimeout(t);
-  }, [router]);
+    // Se não tiver código, tenta pegar de algum lugar ou volta
+    if (!codigoSala) {
+        // Tenta pegar da store se necessário, ou volta
+        // setCodigoSala(getPin()); 
+        return;
+    }
+
+    const conectarWebSocket = async () => {
+      try {
+        // 1. Pega dados do usuário para o header de conexão
+        const userProfile = await usuarioService.getMeuPerfil();
+        const userId = String(userProfile.id);
+
+        // 2. Configura o Cliente STOMP
+        // Nota: Em React Native/Mobile, usamos 'wss://' e apontamos direto para o endpoint websocket
+        // O endpoint do seu backend é /ws, então o nativo geralmente é /ws/websocket
+        const socketUrl = "wss://tccdrakes.azurewebsites.net/ws/websocket";
+
+        const client = new Client({
+          brokerURL: socketUrl,
+          connectHeaders: {
+            login: userId,
+          },
+          // Configurações para estabilidade no mobile
+          reconnectDelay: 5000,
+          heartbeatIncoming: 4000,
+          heartbeatOutgoing: 4000,
+          forceBinaryWSFrames: true,
+          appendMissingNULLonIncoming: true,
+          
+          debug: (str) => {
+            // console.log('STOMP: ' + str); // Descomente para debug
+          },
+
+          onConnect: () => {
+            console.log('CONECTADO AO WEBSOCKET!');
+            setStatus('Aguardando o host iniciar...');
+
+            // 3. Se inscreve no tópico da sala
+            client.subscribe(`/topic/sala/${codigoSala}`, (message) => {
+              try {
+                const payload = JSON.parse(message.body);
+                console.log('Mensagem recebida:', payload);
+
+                // --- LÓGICA DO JOGO ---
+                if (payload.type === "JOGO_INICIADO") {
+                  const { idFormulario, idSala, codigoSala } = payload;
+                  
+                  // Desconecta antes de navegar para não vazar memória
+                  client.deactivate();
+
+                  // Navega para a tela do jogo passando os dados
+                  router.replace({
+                    pathname: '/jogo',
+                    params: { 
+                      idFormulario, 
+                      idSala, 
+                      codigoSala 
+                    }
+                  });
+                } 
+                else if (payload.type === "SALA_FECHADA") {
+                  Alert.alert("Atenção", "A sala foi fechada pelo host.");
+                  client.deactivate();
+                  router.replace('/home');
+                }
+                // Você pode adicionar USUARIO_ENTROU aqui se quiser mostrar lista de quem tá na sala
+
+              } catch (e) {
+                console.error("Erro ao processar mensagem:", e);
+              }
+            });
+          },
+
+          onStompError: (frame) => {
+            console.error('Broker error: ' + frame.headers['message']);
+            setStatus('Erro de conexão. Tentando reconectar...');
+          },
+          
+          onWebSocketClose: () => {
+             console.log("Conexão fechada.");
+          }
+        });
+
+        // Inicia a conexão
+        client.activate();
+        stompClient.current = client;
+
+      } catch (error) {
+        console.error("Erro no setup do socket:", error);
+        setStatus("Erro ao conectar.");
+      }
+    };
+
+    conectarWebSocket();
+
+    // Cleanup ao sair da tela: desconectar
+    return () => {
+      if (stompClient.current) {
+        stompClient.current.deactivate();
+      }
+    };
+  }, [codigoSala]);
+
+  const handleSair = () => {
+    if (stompClient.current) {
+      stompClient.current.deactivate();
+    }
+    // Aqui idealmente você chamaria uma API para avisar que saiu da sala antes de navegar
+    router.replace('/home'); // ou voltar para onde digita o pin
+  };
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -24,18 +150,23 @@ export default function Aguardando() {
         <CustomHeader showMenu={true} menuPosition="right" closeButtonSide="left" />
         <View style={styles.content}>
           <GameboyIcon style={styles.illustration} />
-          <Text style={styles.title}>Aguardando o host da Sala</Text>
+          
+          <Text style={styles.title}>Aguardando o host</Text>
+          
           <View style={styles.codeContainer}>
-            <Text style={styles.code}>CODE: {code}</Text>
+            <Text style={styles.codeLabel}>CÓDIGO DA SALA:</Text>
+            <Text style={styles.code}>{codigoSala || '...'}</Text>
           </View>
+
           <View style={styles.card}>
             <View style={styles.loadingRow}>
               <ActivityIndicator size="small" color="#1CB0FC" />
-              <Text style={styles.inputText}>Carregando...</Text>
+              <Text style={styles.inputText}>{status}</Text>
             </View>
+            
             <View style={styles.exitButtonWrapper}>
               <View style={styles.exitButtonShadow} />
-              <TouchableOpacity style={styles.exitButton} onPress={() => router.replace('/game-pin')}>
+              <TouchableOpacity style={styles.exitButton} onPress={handleSair}>
                 <Text style={styles.exitText}>SAIR</Text>
               </TouchableOpacity>
             </View>
@@ -50,24 +181,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1CB0FC',
-    // alignItems: 'center', // Removido para header não ser centralizado
   },
-  header: {
-    width: '100%',
-    marginTop: 30,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 30,
-  },
-  code: {
-    color: '#FFF',
-    fontSize: 30,
-    fontWeight: 'bold',
-    letterSpacing: 2,
-    fontFamily: 'Blinker-Bold',
-    textAlign: 'center',
+  content: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 50,
   },
   illustration: {
     width: 320,
@@ -80,6 +199,27 @@ const styles = StyleSheet.create({
     fontFamily: 'Blinker-Bold',
     fontSize: 28,
     letterSpacing: 0.3,
+    textAlign: 'center',
+  },
+  codeContainer: {
+    width: '100%',
+    marginTop: 15,
+    marginBottom: 15,
+    alignItems: 'center',
+    paddingHorizontal: 30,
+  },
+  codeLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    marginBottom: 4,
+  },
+  code: {
+    color: '#FFF',
+    fontSize: 36,
+    fontWeight: 'bold',
+    letterSpacing: 4,
+    fontFamily: 'Blinker-Bold',
     textAlign: 'center',
   },
   card: {
@@ -96,7 +236,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  inputPlaceholder: {
+  loadingRow: {
+    flexDirection: 'row',
     width: 270,
     height: 42,
     backgroundColor: '#FFFFFF',
@@ -108,14 +249,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     marginHorizontal: 20,
     alignSelf: 'center',
+    gap: 10,
   },
   inputText: {
-    fontFamily: 'Poppins',
-    fontWeight: '600',
-    fontSize: 16,
-    lineHeight: 24,
-    textAlign: 'center',
-    color: 'rgba(0, 0, 0, 0.31)',
+    fontFamily: 'Poppins-SemiBold', // Corrigido para nome da fonte padrão se não tiver alias
+    fontSize: 14,
+    color: '#1CB0FC',
   },
   exitButtonWrapper: {
     position: 'relative',
@@ -145,33 +284,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   exitText: {
-    fontFamily: 'Blinker',
-    fontWeight: '700',
+    fontFamily: 'Blinker-Bold', // Ajuste conforme suas fontes
     fontSize: 16,
     lineHeight: 19,
     textAlign: 'center',
     letterSpacing: 0.02,
     textTransform: 'uppercase',
     color: '#FFFFFF',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  codeContainer: {
-    width: '100%',
-    marginTop: 20,
-    alignItems: 'center',
-    paddingHorizontal: 30,
-  },
-  code: {
-    color: '#FFF',
-    fontSize: 30,
-    fontWeight: 'bold',
-    letterSpacing: 2,
-    fontFamily: 'Blinker-Bold',
-    textAlign: 'center',
-    flex: 1,
   },
 });

@@ -1,18 +1,30 @@
 // components/QuestionarioSection.js
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  ScrollView, 
+  TouchableOpacity, 
+  ActivityIndicator,
+  Alert 
+} from 'react-native';
+import { useRouter } from 'expo-router'; // Importar router se for navegar
 import styles from '../styles/JogoStyles';
 import QuestionariosBannerIcon from '../components/icons/QuestionariosBannerIcon';
 import BuscaIcon from '../components/icons/BuscaIcon';
 
+// Importando o serviço que acabamos de criar
 import { getQuestionarios } from '../services/formulariosService';
 
 export default function QuestionarioSection() {
   const [searchText, setSearchText] = useState('');
-  const [quizzes, setQuizzes] = useState([]);               // ← dados da API
+  const [quizzes, setQuizzes] = useState([]);
   const [filteredQuizzes, setFilteredQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const router = useRouter(); // Hook para navegação
 
   // 🔥 Carregar dados da API
   useEffect(() => {
@@ -27,7 +39,8 @@ export default function QuestionarioSection() {
       const listaFormatada = data.map((form) => ({
         id: form.idFormulario,
         title: form.titulo,
-        description: `${form.perguntas.length} questões`,
+        // Proteção: usa '?.' e '|| 0' caso o array perguntas venha nulo
+        description: `${form.perguntas?.length || 0} questões`,
       }));
 
       setQuizzes(listaFormatada);
@@ -35,6 +48,7 @@ export default function QuestionarioSection() {
 
     } catch (error) {
       console.error("Erro ao carregar questionários:", error);
+      // Opcional: Alert.alert("Erro", "Não foi possível carregar a lista.");
     } finally {
       setLoading(false);
     }
@@ -48,7 +62,6 @@ export default function QuestionarioSection() {
     }
 
     const texto = searchText.toUpperCase();
-
     const filtrados = quizzes.filter(q =>
       q.title.toUpperCase().includes(texto)
     );
@@ -57,8 +70,13 @@ export default function QuestionarioSection() {
   }, [searchText, quizzes]);
 
   // Quando clicar no card
-  const handleStartQuiz = (quizTitle) => {
-    console.log(`Iniciando o quiz: ${quizTitle}`);
+  const handleStartQuiz = (quizId, quizTitle) => {
+    console.log(`Iniciando o quiz ID: ${quizId} - ${quizTitle}`);
+    
+    // EXEMPLO DE NAVEGAÇÃO:
+    // router.push({ pathname: '/sala', params: { id: quizId, nome: quizTitle } });
+    // ou
+    // router.push(`/quiz/${quizId}`);
   };
 
   return (
@@ -79,23 +97,24 @@ export default function QuestionarioSection() {
       </View>
 
       {/* LOADING */}
-      {loading && (
-        <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />
-      )}
-
-      {/* LISTA */}
-      {!loading && (
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#00A9FF" style={{ marginTop: 20 }} />
+        </View>
+      ) : (
+        /* LISTA */
         <View style={{ flex: 1 }}>
           {filteredQuizzes.length > 0 ? (
             <ScrollView
               style={styles.quizListContainer}
               nestedScrollEnabled={true}
+              showsVerticalScrollIndicator={false}
             >
               {filteredQuizzes.map((quiz) => (
                 <TouchableOpacity
                   key={quiz.id}
                   style={styles.quizCard}
-                  onPress={() => handleStartQuiz(quiz.title)}
+                  onPress={() => handleStartQuiz(quiz.id, quiz.title)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.quizCardTextContainer}>
@@ -104,6 +123,8 @@ export default function QuestionarioSection() {
                   </View>
                 </TouchableOpacity>
               ))}
+              {/* Espaço extra no final para não cortar o último item */}
+              <View style={{ height: 20 }} />
             </ScrollView>
           ) : (
             <View style={styles.searchEmptyContainer}>
