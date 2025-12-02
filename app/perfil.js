@@ -1,37 +1,167 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Dimensions, ScrollView, ImageBackground, TextInput } from 'react-native';
+// app/perfil.js
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  SafeAreaView, 
+  TouchableOpacity, 
+  Dimensions, 
+  ScrollView, 
+  TextInput,
+  Alert,
+  ActivityIndicator,
+  Modal
+} from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { UserIcon, MedalhaIcon, RankingIcon, Trofeu1Icon } from '../components/icons/icon';
+import { useRouter, useFocusEffect } from 'expo-router';
+
+// --- ÍCONES GERAIS ---
+import { MedalhaIcon, Trofeu1Icon } from '../components/icons/icon';
 import Userprofile2Icon from '../components/icons/Userprofile2Icon';
+
+// --- ÍCONES DE AVATAR ---
+import BodeIcon from '../components/icons/BodeIcon';
+import CanetabicIcon from '../components/icons/CanetabicIcon';
+import PatoIcon from '../components/icons/PatoIcon';
+
+import usuarioService from '../services/usuarioService';
 
 const { width } = Dimensions.get('window');
 
 export default function PerfilScreen() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
-  // Dados mockados (substituir quando houver backend)
-  // Passar para estado para editar depois
+  // Estado do Perfil
   const [profile, setProfile] = useState({
-    name: 'Usuario200',
-    email: 'usuario200@gmail.com',
-    rankPosition: 1,
-    points: 200,
-    bio: 'texto limitado a uma quantidade de caracteres',
+    id: null, 
+    name: 'Carregando...',
+    email: '',
+    rankPosition: '-',
+    points: 0,
+    bio: '',
+    tag: '',
+    avatar: null
   });
+
   const [editingBio, setEditingBio] = useState(false);
-  const [bioDraft, setBioDraft] = useState(profile.bio);
+  const [bioDraft, setBioDraft] = useState('');
+  const [avatarModalVisible, setAvatarModalVisible] = useState(false);
+
+  // Lista de Avatares disponíveis para escolha
+  const availableAvatars = [
+    { key: 'bode', Component: BodeIcon, label: 'Bode' },
+    { key: 'pato', Component: PatoIcon, label: 'Pato' },
+    { key: 'canetabic', Component: CanetabicIcon, label: 'Caneta' },
+  ];
+
+  const avatarMap = {
+    'bode': BodeIcon,
+    'bode.svg': BodeIcon,
+    'canetabic': CanetabicIcon,
+    'canetabic.svg': CanetabicIcon,
+    'pato': PatoIcon,
+    'pato.svg': PatoIcon,
+  };
+
+  // --- CARREGAR DADOS ---
+  const fetchProfileData = async () => {
+    try {
+      const userData = await usuarioService.getMeuPerfil();
+      if (userData) {
+        setProfile({
+          id: userData.id,
+          name: userData.nome || 'Usuário',
+          email: userData.email || '', 
+          rankPosition: userData.ranking || '-', 
+          points: userData.pontuacao || 0,
+          bio: userData.biografia || 'Sem biografia...',
+          tag: `#${userData.id}`,
+          avatar: userData.avatar
+        });
+        setBioDraft(userData.biografia || '');
+      }
+    } catch (error) {
+      console.error("Erro perfil:", error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfileData();
+    }, [])
+  );
+
+  const getAvatarComponent = () => {
+    if (profile.avatar) {
+      const avatarKey = profile.avatar.toLowerCase();
+      return avatarMap[avatarKey] || Userprofile2Icon;
+    }
+    return Userprofile2Icon;
+  };
+  const CurrentAvatar = getAvatarComponent();
+
+  // --- ATUALIZAR BIOGRAFIA ---
+  const handleSaveBio = async () => {
+    if (updating) return;
+    
+    if (!profile.id) {
+        Alert.alert("Erro", "ID do usuário não encontrado.");
+        return;
+    }
+
+    setUpdating(true);
+    try {
+      await usuarioService.atualizarBiografia(profile.id, bioDraft);
+      
+      setProfile({ ...profile, bio: bioDraft });
+      setEditingBio(false);
+      Alert.alert("Sucesso", "Biografia atualizada!");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erro", "Falha ao atualizar biografia.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // --- ATUALIZAR AVATAR (AGORA USANDO O ID) ---
+  const handleSelectAvatar = async (avatarKey) => {
+    setAvatarModalVisible(false);
+    
+    if (!profile.id) {
+        Alert.alert("Erro", "ID do usuário não encontrado.");
+        return;
+    }
+
+    setUpdating(true);
+
+    try {
+      // Chama o endpoint correto: PUT /usuarios/{id}/avatar
+      await usuarioService.atualizarAvatar(profile.id, avatarKey);
+
+      setProfile(prev => ({ ...prev, avatar: avatarKey }));
+      Alert.alert("Sucesso", "Avatar alterado com sucesso!");
+
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erro", "Não foi possível alterar o avatar.");
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
+        
+        {/* HEADER */}
         <View style={styles.headerRow}>
           <View style={{ width: 28 }} />
-          {/* PlacaIcon não existe, comentário placeholder:
-          <PlacaIcon style={styles.badgeImage} width={350} height={50} /> */}
-          
-            <Text style={styles.badgeText}></Text>
-          
+          <Text style={styles.badgeText}>MEU PERFIL</Text>
           <View style={styles.headerSpacerRight}>
             <TouchableOpacity onPress={() => router.back()}>
               <Text style={styles.closeIcon}>×</Text>
@@ -39,14 +169,24 @@ export default function PerfilScreen() {
           </View>
         </View>
 
+        {/* CARD PRINCIPAL */}
         <View style={styles.card}>
+          
           <View style={styles.avatarWrapper}>
-            <View style={styles.avatarCircle}>
-              {/* Avatar do perfil (ícone) */}
-              <Userprofile2Icon width={100} height={100} style={{ borderRadius: 50 }} />
-              
-              <View style={styles.statusDot} />
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatarCircle}>
+                <CurrentAvatar width={100} height={100} style={{ borderRadius: 50 }} />
+                <View style={styles.statusDot} />
+              </View>
+
+              <TouchableOpacity 
+                style={styles.changeAvatarButton} 
+                onPress={() => setAvatarModalVisible(true)}
+              >
+                <Feather name="camera" size={16} color="#FFF" />
+              </TouchableOpacity>
             </View>
+
             <Text style={styles.name}>{profile.name}</Text>
             <Text style={styles.email}>{profile.email}</Text>
           </View>
@@ -54,7 +194,6 @@ export default function PerfilScreen() {
           <View style={styles.gridRow}>
             <View style={styles.gridCard}>
               <View style={styles.gridHeader}>
-                {/* Ícones da grid: */}
                 <Trofeu1Icon style={styles.gridIcon} width={28} height={27} />
                 <Text style={styles.gridTitle}>POSIÇÃO NO RANKING</Text>
               </View>
@@ -62,11 +201,12 @@ export default function PerfilScreen() {
             </View>
             <View style={styles.gridCard}>
               <View style={styles.gridHeader}>
-                {/* Ícones da grid: */}
                 <MedalhaIcon style={styles.gridIcon} width={25} height={27} />
                 <Text style={styles.gridTitle}>PONTOS</Text>
               </View>
-              <Text style={styles.gridValue}>{`${profile.points}`.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1 ')}</Text>
+              <Text style={styles.gridValue}>
+                {`${profile.points}`.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1 ')}
+              </Text>
             </View>
           </View>
 
@@ -74,35 +214,29 @@ export default function PerfilScreen() {
             <View style={styles.gridCardWide}>
               <Text style={styles.sectionLabel}>TAG#</Text>
               <View style={styles.tagRow}>
-                {/* Ícones da grid: */}
                 <Trofeu1Icon width={30} height={30} style={{ marginRight: 8, resizeMode: 'contain' }} />
                 <Text style={styles.tagText}>{profile.tag}</Text>
               </View>
             </View>
+            
             <View style={styles.gridCardWide}>
               <Text style={styles.sectionLabel}>BIOGRAFIA</Text>
               {editingBio ? (
                 <>
                   <TextInput
                     value={bioDraft}
-                    style={[styles.bioText, {backgroundColor: '#fff', color: '#333', padding: 8, borderRadius: 8}]}
+                    style={styles.bioInput}
                     onChangeText={setBioDraft}
                     maxLength={120}
                     multiline
                     autoFocus
                   />
-                  <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 8 }}>
-                    <TouchableOpacity onPress={() => {
-                      setProfile({ ...profile, bio: bioDraft });
-                      setEditingBio(false);
-                    }} style={{ marginRight: 16, backgroundColor: '#00A9FF', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 }}>
-                      <Text style={{ color: 'white', fontFamily: 'Poppins-Medium' }}>Salvar</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 12 }}>
+                    <TouchableOpacity onPress={handleSaveBio} style={styles.saveButton} disabled={updating}>
+                      {updating ? <ActivityIndicator color="#FFF" size="small" /> : <Text style={styles.buttonTextWhite}>Salvar</Text>}
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => {
-                      setBioDraft(profile.bio);
-                      setEditingBio(false);
-                    }} style={{ backgroundColor: '#E9E9E9', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 }}>
-                      <Text style={{ color: '#2F2E2E', fontFamily: 'Poppins-Medium' }}>Cancelar</Text>
+                    <TouchableOpacity onPress={() => { setBioDraft(profile.bio); setEditingBio(false); }} style={styles.cancelButton}>
+                      <Text style={styles.buttonTextDark}>Cancelar</Text>
                     </TouchableOpacity>
                   </View>
                 </>
@@ -113,19 +247,56 @@ export default function PerfilScreen() {
           </View>
 
           <View style={styles.footerRow}>
-            <TouchableOpacity style={styles.editButton} onPress={() => setEditingBio(true)}>
-              <Feather name="edit-2" size={16} color="#2F2E2E" />
-            </TouchableOpacity>
+            {!editingBio && (
+              <TouchableOpacity style={styles.editButton} onPress={() => setEditingBio(true)}>
+                <Feather name="edit-2" size={16} color="#2F2E2E" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </ScrollView>
+
+      {/* --- MODAL DE SELEÇÃO DE AVATAR --- */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={avatarModalVisible}
+        onRequestClose={() => setAvatarModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Escolha seu Avatar</Text>
+              <TouchableOpacity onPress={() => setAvatarModalVisible(false)}>
+                <Feather name="x" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.avatarsGrid}>
+              {availableAvatars.map((item) => (
+                <TouchableOpacity 
+                  key={item.key} 
+                  style={[
+                    styles.avatarOption, 
+                    profile.avatar === item.key && styles.avatarOptionSelected
+                  ]}
+                  onPress={() => handleSelectAvatar(item.key)}
+                >
+                  <item.Component width={70} height={70} />
+                  <Text style={styles.avatarLabel}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
 
 const CARD_BG = '#FFFFFF';
 const PAGE_BG = '#2B2B2B';
-const PRIMARY = '#00A9FF';
 const TEXT_DARK = '#2F2E2E';
 const TEXT_MUTED = '#626361';
 const TILE_BG = '#D9D9D9';
@@ -139,15 +310,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  badgeImage: {
-    height: 50,
-    width: 350,
-    alignItems: '',
-    justifyContent: '',
-    marginLeft: -22,
-  },
   badgeText: { color: '#FFFFFF', fontFamily: 'Poppins-SemiBold', fontSize: 16 },
-  closeIcon: { color: '#FFF', fontSize: 22, padding: 4 },
+  closeIcon: { color: '#FFF', fontSize: 32, padding: 4 },
   headerSpacerRight: { width: 28, alignItems: 'flex-end' },
 
   card: {
@@ -157,6 +321,7 @@ const styles = StyleSheet.create({
     minHeight: 520,
   },
   avatarWrapper: { alignItems: 'center', marginTop: 8 },
+  avatarContainer: { position: 'relative' },
   avatarCircle: {
     width: 100,
     height: 100,
@@ -164,12 +329,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  avatarImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    overflow: 'hidden',
   },
   statusDot: {
     position: 'absolute',
@@ -179,7 +338,24 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     backgroundColor: '#2CC84D',
+    borderWidth: 2,
+    borderColor: '#FFF',
   },
+  changeAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#00A9FF',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFF',
+    elevation: 3,
+  },
+
   name: { marginTop: 10, fontFamily: 'Poppins-SemiBold', fontSize: 16, color: TEXT_DARK },
   email: { marginTop: 2, fontFamily: 'Poppins-Regular', fontSize: 12, color: TEXT_MUTED },
 
@@ -206,17 +382,80 @@ const styles = StyleSheet.create({
   },
   sectionLabel: { fontFamily: 'Poppins-Medium', fontSize: 12, color: TEXT_MUTED, marginBottom: 8 },
   tagRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  smallIcon: { width: 18, height: 18 },
   tagText: { fontFamily: 'Poppins-SemiBold', color: TEXT_DARK },
-  bioText: { fontFamily: 'Poppins-Regular', color: '#FFFFFF', textAlign: 'center' },
+  
+  bioText: { fontFamily: 'Poppins-Regular', color: TEXT_DARK, textAlign: 'left', lineHeight: 20 },
+  bioInput: { 
+    backgroundColor: '#FFF', 
+    color: TEXT_DARK, 
+    padding: 10, 
+    borderRadius: 8, 
+    fontFamily: 'Poppins-Regular',
+    textAlignVertical: 'top',
+    minHeight: 80,
+    borderWidth: 1,
+    borderColor: '#CCC'
+  },
 
   footerRow: { alignItems: 'flex-end', marginTop: 12 },
   editButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#E9E9E9',
   },
+  
+  saveButton: { marginRight: 10, backgroundColor: '#00A9FF', borderRadius: 6, paddingHorizontal: 16, paddingVertical: 8 },
+  cancelButton: { backgroundColor: '#FFF', borderRadius: 6, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: '#CCC' },
+  buttonTextWhite: { color: 'white', fontFamily: 'Poppins-Medium', fontSize: 12 },
+  buttonTextDark: { color: '#2F2E2E', fontFamily: 'Poppins-Medium', fontSize: 12 },
+
+  // Estilos do Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    minHeight: 300,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#333',
+  },
+  avatarsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    gap: 15,
+  },
+  avatarOption: {
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  avatarOptionSelected: {
+    borderColor: '#00A9FF',
+    backgroundColor: '#F0F8FF',
+  },
+  avatarLabel: {
+    marginTop: 5,
+    fontFamily: 'Poppins-Medium',
+    color: '#333',
+  }
 });
