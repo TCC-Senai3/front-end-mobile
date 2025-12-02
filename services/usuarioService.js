@@ -1,60 +1,84 @@
-import api from "./api";
-import { handleApiErrors } from "../utils/handleApiErrors";
+// services/usuarioService.js
 
-// =============================
-// LOGIN DO USUÁRIO
-// =============================
+import api from "./api";
+import * as SecureStore from 'expo-secure-store';
+
+const handleErrors = (error) => {
+  return error.response?.data?.message || error.message || "Erro desconhecido";
+};
+
+// LOGIN
 export async function loginUsuario(email, senha) {
   try {
-    const response = await api.post("/usuarios/login", {
-      email,
-      senha,
-    });
+    const response = await api.post("/usuarios/login", { email, senha });
 
-    return response.data; // OK
+    if (response.data.token) {
+      await SecureStore.setItemAsync('authToken', response.data.token);
+      if (response.data.user) {
+        await SecureStore.setItemAsync('currentUser', JSON.stringify(response.data.user));
+      }
+    }
+    return response.data; 
   } catch (error) {
-    throw new Error(handleApiErrors(error));
+    throw new Error(handleErrors(error));
   }
 }
 
-// =============================
-// CADASTRO DO USUÁRIO
-// =============================
+// CADASTRO
 export async function cadastrarUsuario(nome, email, senha) {
   try {
-    const response = await api.post("/usuarios/cadastro", {
-      nome,
-      email,
-      senha,
-    });
-
+    const response = await api.post("/usuarios/cadastro", { nome, email, senha });
     return response.data;
   } catch (error) {
-    throw new Error(handleApiErrors(error));
+    throw new Error(handleErrors(error));
   }
 }
 
-// =============================
-// BUSCAR AVATAR DO USUÁRIO PELO ID
-// =============================
+// PERFIL
+export async function getMeuPerfil() {
+  try {
+    const response = await api.get("/usuarios/me");
+    return response.data;
+  } catch (error) {
+    throw new Error(handleErrors(error));
+  }
+}
+
+// LOGOUT
+export async function logoutUsuario() {
+  try {
+    await SecureStore.deleteItemAsync('authToken');
+    await SecureStore.deleteItemAsync('currentUser');
+  } catch (error) {
+    console.error("Erro no logout:", error);
+  }
+}
+
+// TOKEN
+export async function getToken() {
+  try {
+    return await SecureStore.getItemAsync('authToken');
+  } catch (error) {
+    return null;
+  }
+}
+
+// AVATAR
 export async function getAvatarById(userId) {
   try {
     const response = await api.get(`/usuarios/${userId}/avatar`);
-
-    // Aqui assumo que sua API retorna:
-    // { "avatar": "https://servidor.com/arquivo.png" }
     return response.data.avatar || null;
-
   } catch (error) {
-    console.error(`Erro ao carregar avatar do usuário ${userId}:`, error);
-    return null; // Evita crash no ranking
+    return null; 
   }
 }
 
-// Export único organizado
 const usuarioService = {
   loginUsuario,
   cadastrarUsuario,
+  getMeuPerfil,
+  logoutUsuario,
+  getToken,
   getAvatarById,
 };
 

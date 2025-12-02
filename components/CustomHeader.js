@@ -1,12 +1,30 @@
 // components/CustomHeader.js
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, SafeAreaView, Dimensions, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, useCallback } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Modal, 
+  SafeAreaView, 
+  Dimensions, 
+  Pressable 
+} from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
-import MedalhamenuIcon from '../components/icons/MedalhamenuIcon'
-import PerfilIcon from '../components/icons/PerfilIcon';
+
+// --- Ícones Gerais ---
+import MedalhamenuIcon from '../components/icons/MedalhamenuIcon';
+import PerfilIcon from '../components/icons/PerfilIcon'; // Ícone padrão
+
+// --- Ícones de Avatar (Novos) ---
+import BodeIcon from '../components/icons/BodeIcon';
+import CanetabicIcon from '../components/icons/CanetabicIcon';
+import PatoIcon from '../components/icons/PatoIcon';
+
+import usuarioService from '../services/usuarioService'; 
 
 const { width, height } = Dimensions.get('window');
 
@@ -16,15 +34,13 @@ const CustomHeader = ({
   userName = "Usuário",
   menuPosition = 'left',
   closeButtonSide = 'right',
-  headerStyle = 'solid', // 'solid' (com fundo) ou 'floating' (só o ícone)
+  headerStyle = 'solid',
 }) => {
   const [isMenuVisible, setMenuVisible] = useState(false);
   const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
-  const router = useRouter();
+  const [user, setUser] = useState(null);
 
-  const navigateAndClose = (path) => { setMenuVisible(false); router.push(path); };
-  const handleLogoutPress = () => { setMenuVisible(false); setLogoutModalVisible(true); };
-  const handleConfirmLogout = () => { setLogoutModalVisible(false); router.replace('/'); };
+  const router = useRouter();
 
   const [fontsLoaded] = useFonts({
     'Poppins-Regular': require('../assets/fonts/Poppins/Poppins-Regular.ttf'),
@@ -32,9 +48,55 @@ const CustomHeader = ({
     'Blinker-Regular': require('../assets/fonts/Blinker/Blinker-Regular.ttf'),
   });
 
+  // --- MAPEAMENTO DE AVATARES (IGUAL AO RANKING) ---
+  const avatarMap = {
+    'bode': BodeIcon,
+    'bode.svg': BodeIcon,
+    'canetabic': CanetabicIcon,
+    'canetabic.svg': CanetabicIcon,
+    'pato': PatoIcon,
+    'pato.svg': PatoIcon,
+  };
+
+  // --- BUSCA DADOS ---
+  useFocusEffect(
+    useCallback(() => {
+      const fetchPerfil = async () => {
+        try {
+          if (showMenu) {
+            const token = await usuarioService.getToken();
+            if (token) {
+              const userData = await usuarioService.getMeuPerfil();
+              // console.log("Dados Header:", userData); // Debug se precisar
+              setUser(userData);
+            }
+          }
+        } catch (error) {
+          console.log("Erro Header:", error);
+        }
+      };
+      fetchPerfil();
+    }, [showMenu])
+  );
+
+  const navigateAndClose = (path) => { setMenuVisible(false); router.push(path); };
+  const handleLogoutPress = () => { setMenuVisible(false); setLogoutModalVisible(true); };
+  
+  const handleConfirmLogout = async () => { 
+    try {
+      await usuarioService.logoutUsuario();
+      setLogoutModalVisible(false); 
+      router.replace('/login'); 
+    } catch (error) {
+      router.replace('/login');
+    }
+  };
+
   const menuItems = [
-    { name: 'Início', path: '/' }, { name: 'Termos', path: '/termos' },{ name: 'Contato', path: '/contato' },
-    { name: 'Minha Conta', path: '/perfil' },{ name: 'Usuario', path: '/' },
+    { name: 'Início', path: '/game' }, 
+    { name: 'Termos', path: '/termos' },
+    { name: 'Contato', path: '/contato' },
+    { name: 'Minha Conta', path: '/perfil' },
     { name: 'Sair' },
   ];
 
@@ -44,8 +106,24 @@ const CustomHeader = ({
     </TouchableOpacity>
   );
 
+  // --- LÓGICA PARA ESCOLHER O ÍCONE DO AVATAR ---
+  const getAvatarComponent = () => {
+    if (user && user.avatar) {
+      const avatarKey = user.avatar.toLowerCase();
+      // Retorna o ícone mapeado OU o PerfilIcon se não encontrar
+      return avatarMap[avatarKey] || PerfilIcon;
+    }
+    // Retorna ícone padrão se não tiver user ou avatar
+    return PerfilIcon;
+  };
+
+  const AvatarComponent = getAvatarComponent();
+
+  if (!fontsLoaded) return null;
+
   return (
     <>
+      {/* Header Sólido */}
       {headerStyle === 'solid' && (
         <SafeAreaView style={{ backgroundColor: '#00A9FF' }}>
           <View style={styles.header}>
@@ -65,6 +143,7 @@ const CustomHeader = ({
         </SafeAreaView>
       )}
 
+      {/* Header Flutuante */}
       {headerStyle === 'floating' && showMenu && (
         <View style={[
           styles.floatingContainer,
@@ -74,7 +153,7 @@ const CustomHeader = ({
         </View>
       )}
 
-      {/* --- CONTEÚDO DO MODAL CORRIGIDO --- */}
+      {/* --- MENU LATERAL (MODAL) --- */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -95,14 +174,23 @@ const CustomHeader = ({
                   <Feather name="x" size={width * 0.08} color="black" />
                 </TouchableOpacity>
                 
+                {/* --- ÁREA DO PERFIL --- */}
                 <View style={[styles.menuPerfil, menuPosition === 'right' && styles.menuPerfilRight]}>
                   <View style={[styles.menuframe, menuPosition === 'right' && styles.menuframeRight]}>
-                    <PerfilIcon style={styles.profileImage} />
-                    <Text style={styles.menuUserName}>{userName}</Text>
+                    
+                    {/* Renderiza o componente SVG escolhido */}
+                    <AvatarComponent style={styles.profileImage} />
+
+                    <Text style={styles.menuUserName} numberOfLines={1}>
+                        {user?.nome || userName}
+                    </Text>
                   </View>
+                  
                   <View style={styles.scoreContainer}>
                     <MedalhamenuIcon style={styles.medalImage} />
-                    <Text style={styles.pontuacao}>0</Text>
+                    <Text style={styles.pontuacao}>
+                        {user?.pontuacao !== undefined ? user.pontuacao : 0}
+                    </Text>
                   </View>
                 </View>
 
@@ -122,6 +210,7 @@ const CustomHeader = ({
         </TouchableOpacity>
       </Modal>
       
+      {/* --- MODAL SAIR --- */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -135,7 +224,8 @@ const CustomHeader = ({
               </TouchableOpacity>
               <Text style={styles.logoutModalText}>Deseja mesmo sair da conta?</Text>
               <View style={styles.logoutModalButtons}>
-                <TouchableOpacity style={[styles.logoutButton, styles.cancelButton]} onPress={() => setLogoutModalVisible(false)}></TouchableOpacity>
+                <TouchableOpacity style={[styles.logoutButton, styles.cancelButton]} onPress={() => setLogoutModalVisible(false)}>
+                </TouchableOpacity>
                 <TouchableOpacity style={[styles.logoutButton, styles.confirmButton]} onPress={handleConfirmLogout}>
                   <Text style={styles.confirmButtonText}>Sair</Text>
                 </TouchableOpacity>
@@ -147,9 +237,7 @@ const CustomHeader = ({
   );
 };
 
-
 const styles = StyleSheet.create({
-  // Estilo do cabeçalho sólido (o azul)
   header: {
     backgroundColor: '#00A9FF',
     height: height * 0.1,
@@ -167,8 +255,6 @@ const styles = StyleSheet.create({
     flex: 1, 
     alignItems: 'center' 
   },
-  
-  // Estilos para o menu flutuante
   floatingContainer: {
     position: 'absolute',
     top: height * 0.06,
@@ -180,12 +266,9 @@ const styles = StyleSheet.create({
   floatingPositionRight: {
     right: width * 0.04,
   },
-  
   menuButton: {
     padding: 5,
   },
-
-  // Estilos para o Modal do Menu Lateral
   modalOverlay: { 
     flex: 1, 
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -239,10 +322,11 @@ const styles = StyleSheet.create({
     marginRight: 0,
     marginLeft: width * 0.04,
   },
+  // Estilo ajustado para suportar SVG
   profileImage: {
     width: height * 0.050,
     height: height * 0.050,
-    borderRadius: (height * 0.055) / 2,
+    // borderRadius não afeta SVG diretamente, mas mantém caso use View container
   },
   menuUserName: {
     fontSize: width * 0.05,
@@ -284,8 +368,6 @@ const styles = StyleSheet.create({
   menuItemTextRight: {
     textAlign: 'right',
   },
-
-  // Estilos para o Modal de Logout
   logoutModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -335,6 +417,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: width * 0.04,
   },
+  cancelButton: {},
+  logoutButton: {}
 });
 
 export default CustomHeader;
