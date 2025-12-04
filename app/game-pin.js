@@ -7,35 +7,68 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
-  ImageBackground,
   Dimensions,
-  Platform,
   ScrollView,
   Alert,
+  ActivityIndicator, // <--- Importado
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
-import { setPin } from '../store/pinStore';
-import { OndasIcon } from '../components/icons/icon';
 import BackgroundIcon from '../components/icons/BackgroundIcon';
 
-const { height } = Dimensions.get('window');
+// --- SERVIÇOS ---
+import salaService from '../services/salaService';
+import usuarioService from '../services/usuarioService';
+
+const { width, height } = Dimensions.get('window');
 
 export default function GamePinScreen() {
   const router = useRouter();
   const [pin, setPin] = useState('');
+  const [loading, setLoading] = useState(false); // Estado de carregamento
 
-  const handleEnter = () => {
-    const length = pin.trim().length;
-    if (length !== 6) {
-      Alert.alert('PIN inválido', 'Você precisa informar exatamente 6 dígitos.');
+  const handleEnter = async () => {
+    const cleanPin = pin.trim();
+
+    if (cleanPin.length < 1) {
+      Alert.alert('Atenção', 'Por favor, digite o código da sala.');
       return;
     }
-    setPin(pin.trim()); // Atualiza o estado local
-    // Salva o PIN globalmente
-    require('../store/pinStore').setPin(pin.trim());
-    router.push('/aguardando');
+
+    setLoading(true);
+
+    try {
+      // 1. Pega ID do usuário logado
+      const perfil = await usuarioService.getMeuPerfil();
+      
+      if (!perfil || !perfil.id) {
+        Alert.alert("Erro", "Usuário não identificado. Faça login novamente.");
+        return;
+      }
+
+      console.log(`Tentando entrar na sala ${cleanPin} com user ${perfil.id}...`);
+      
+      // 2. Chama a API para entrar na sala
+      await salaService.entrarNaSala(cleanPin, perfil.id);
+
+      // 3. Sucesso! Navega para a sala passando o código
+      router.push({
+        pathname: '/sala',
+        params: { 
+          codigoSala: cleanPin,
+          nomeSala: 'Sala de Jogo' // O componente sala.js vai atualizar o nome correto via API
+        }
+      });
+
+    } catch (error) {
+      console.error(error);
+      const msg = error.response?.data?.message || "Sala não encontrada ou código inválido.";
+      Alert.alert('Erro ao entrar', msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,40 +79,48 @@ export default function GamePinScreen() {
 
         <CustomHeader title="" showMenu={true} menuPosition="right" />
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContentContainer}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.headerBackground}>
-          <BackgroundIcon width={Dimensions.get('window').width} height={417} />
-          <View style={styles.headerContent}>
-            <Text style={styles.logoTextSenai}>SENAI</Text>
-            <Text style={styles.logoTextSkillUp}>SKILL UP</Text>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContentContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.headerBackground}>
+            <BackgroundIcon width={Dimensions.get('window').width} height={417} />
+            <View style={styles.headerContent}>
+              <Text style={styles.logoTextSenai}>SENAI</Text>
+              <Text style={styles.logoTextSkillUp}>SKILL UP</Text>
+            </View>
+            <View style={styles.lineCover} />
           </View>
-          <View style={styles.lineCover} />
-        </View>
 
-        <View style={styles.cardContainer}>
-          <View style={styles.card}>
-            <TextInput
-              style={styles.pinInput}
-              placeholder="PIN do jogo"
-              placeholderTextColor="#A0A0A0"
-              keyboardType="numeric"
-              maxLength={6}
-              value={pin}
-              onChangeText={(t) => setPin(t.replace(/\D/g, ''))}
-            />
-            <TouchableOpacity style={styles.enterButton} onPress={handleEnter}>
-              <Text style={styles.enterButtonText}>ENTRAR</Text>
-            </TouchableOpacity>
+          <View style={styles.cardContainer}>
+            <View style={styles.card}>
+              <TextInput
+                style={styles.pinInput}
+                placeholder="PIN do jogo"
+                placeholderTextColor="#A0A0A0"
+                keyboardType="default" // Mudado para default caso o PIN tenha letras
+                autoCapitalize="characters"
+                maxLength={8} // Ajuste conforme o tamanho real do seu PIN
+                value={pin}
+                onChangeText={setPin}
+              />
+              
+              <TouchableOpacity 
+                style={[styles.enterButton, (!pin.trim() || loading) && styles.buttonDisabled]} 
+                onPress={handleEnter}
+                disabled={!pin.trim() || loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.enterButtonText}>ENTRAR</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-
-      {/* Remover componentes e estilos de barra inferior e botões cinzas */}
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
     </>
   );
 };
@@ -88,22 +129,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderWidth: 0,
-    borderBottomWidth: 0,
   },
   scrollView: {
     flex: 1,
-    borderWidth: 0,
-    borderBottomWidth: 0,
-    shadowOpacity: 0,
-    elevation: 0,
   },
   scrollContentContainer: {
     alignItems: 'center',
     flexGrow: 1,
     paddingBottom: 100,
-    borderWidth: 0,
-    borderBottomWidth: 0,
   },
   headerBackground: {
     width: '100%',
@@ -112,10 +145,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: -50,
     paddingTop: 42,
-    borderWidth: 0,
-    borderBottomWidth: 0,
-    shadowOpacity: 0,
-    elevation: 0,
     position: 'relative',
     marginBottom: 40,
   },
@@ -128,7 +157,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   logoTextSenai: {
-    fontFamily: 'Blinker-Black',
+    fontFamily: 'Blinker-Black', // Certifique-se que a fonte está carregada
     fontWeight: '900',
     fontSize: 50,
     color: '#FFFFFF',
@@ -138,7 +167,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   logoTextSkillUp: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins-Medium', // Certifique-se que a fonte está carregada
     fontSize: 50,
     color: '#FFFFFF',
     marginTop: -15,
@@ -147,13 +176,10 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
     textAlign: 'center',
   },
-  backButton: {
-    display: 'none',
-  },
   cardContainer: {
     width: '100%',
     alignItems: 'center',
-    marginTop: 40, // aumentar para descer o card
+    marginTop: 40,
   },
   card: {
     width: '85%',
@@ -178,8 +204,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     textAlign: 'center',
     fontFamily: 'Poppins-SemiBold',
-    fontSize: 16,
+    fontSize: 18,
     marginBottom: 12,
+    color: '#333',
   },
   enterButton: {
     width: '100%',
@@ -188,6 +215,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  buttonDisabled: {
+    backgroundColor: '#A0CFFF', // Cor mais clara quando desabilitado
   },
   enterButtonText: {
     fontFamily: 'Poppins-Bold',

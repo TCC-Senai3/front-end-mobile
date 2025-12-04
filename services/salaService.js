@@ -1,100 +1,152 @@
 // services/salaService.js
-import api from './api';
+import api from "./api";
 
 /**
- * Cria uma nova sala.
+ * Criar nova sala
+ * Backend: POST /salas
  */
-export const createSala = async (salaData) => {
+export const createSala = async (salaData, token) => {
   try {
-    const response = await api.post("/salas", salaData);
+    const response = await api.post("/salas", salaData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
     return response.data;
   } catch (error) {
-    console.error("Erro ao criar sala:", error);
+    console.error("❌ Erro ao criar sala:", error);
     throw error;
   }
 };
 
 /**
- * Busca sala pelo PIN/código.
+ * Obter sala pelo PIN/código.
+ * Backend: GET /salas/codigo/{pin}
+ * Fallback: GET /salas/{pin}
  */
-export const getSalaByPin = async (pin) => {
+export const getSalaByPin = async (pin, token) => {
   try {
-    // Ajuste a rota se necessário (no seu web estava /salas/codigo/{pin})
-    // Se no back for /salas/{pin}, mantenha o anterior. Vou seguir o padrão REST comum.
-    // Baseado no seu web:
-    const response = await api.get(`/salas/codigo/${pin}`); 
+    const response = await api.get(`/salas/codigo/${pin}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
     return response.data;
   } catch (error) {
-    // Fallback se a rota for direta
+    console.warn("⚠️ /salas/codigo falhou, tentando fallback /salas/{pin}...");
+
     try {
-        const response = await api.get(`/salas/${pin}`);
-        return response.data;
-    } catch (e) {
-        throw error;
+      const response = await api.get(`/salas/${pin}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (fallbackError) {
+      console.error("❌ Erro ao buscar sala:", fallbackError);
+      throw fallbackError;
     }
   }
 };
 
 /**
- * Entrar em uma sala pelo código.
+ * Entrar na sala
+ * Backend: POST /salas/{idSala}/entrar/{idUsuario}
  */
-export const entrarNaSala = async (codigoSala, idUsuario) => {
+export const entrarNaSala = async (idSala, idUsuario, token) => {
   try {
-    const response = await api.post(`/salas/${codigoSala}/entrar/${idUsuario}`);
+    const response = await api.post(
+      `/salas/${idSala}/entrar/${idUsuario}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
     return response.data;
   } catch (error) {
-    console.error(`Erro ao entrar na sala ${codigoSala}:`, error);
+    console.error(`❌ Erro ao entrar na sala ${idSala}:`, error);
     throw error;
   }
 };
 
 /**
- * Sair da sala.
+ * Sair da sala
+ * Backend: DELETE /salas/{idSala}/sair/{idUsuario}
  */
-export const sairDaSala = async (codigoSala, idUsuario) => {
+export const sairDaSala = async (idSala, idUsuario, token) => {
   try {
-    const response = await api.delete(`/salas/${codigoSala}/sair/${idUsuario}`);
+    const response = await api.delete(
+      `/salas/${idSala}/sair/${idUsuario}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
     return response.data;
   } catch (error) {
-    console.error(`Erro ao sair da sala:`, error);
+    console.error("❌ Erro ao sair da sala:", error);
     throw error;
   }
 };
 
 /**
- * Fechar sala (apenas dono).
+ * Fechar sala
+ * Backend: PUT /salas/{idSala}/fechar
  */
-export const fecharSala = async (idSala) => {
+export const fecharSala = async (idSala, token) => {
   try {
-    const response = await api.put(`/salas/${idSala}/fechar`);
+    const response = await api.put(
+      `/salas/${idSala}/fechar`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
     return response.data;
   } catch (error) {
-    console.error(`Erro ao fechar sala:`, error);
+    console.error("❌ Erro ao fechar sala:", error);
     throw error;
   }
 };
 
 /**
- * Expulsar usuário.
+ * Expulsar usuário
+ * Backend: DELETE /salas/{idSala}/expulsar/{idUsuario}
  */
-export const expulsarUsuario = async (codigoSala, idUsuarioExpulso) => {
+export const expulsarUsuario = async (idSala, idUsuario, token) => {
   try {
-    const response = await api.delete(`/salas/${codigoSala}/expulsar/${idUsuarioExpulso}`);
+    const response = await api.delete(
+      `/salas/${idSala}/expulsar/${idUsuario}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
     return response.data;
   } catch (error) {
-    console.error(`Erro ao expulsar usuário:`, error);
+    console.error("❌ Erro ao expulsar usuário:", error);
     throw error;
   }
 };
 
-// Objeto para exportação padrão e nomeada
-const salaService = {
+export default {
   createSala,
   getSalaByPin,
   entrarNaSala,
   sairDaSala,
   fecharSala,
-  expulsarUsuario
+  expulsarUsuario,
 };
-
-export default salaService;

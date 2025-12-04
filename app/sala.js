@@ -1,5 +1,13 @@
 // app/sala.js
-// Versão React Native (Expo) adaptada do seu código web
+
+// 1. POLYFILL OBRIGATÓRIO (MANTENHA NO TOPO)
+import * as TextEncoding from 'text-encoding';
+
+if (typeof global.TextEncoder === 'undefined') {
+  global.TextEncoder = TextEncoding.TextEncoder;
+  global.TextDecoder = TextEncoding.TextDecoder;
+}
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -11,6 +19,8 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Modal,
+  Pressable
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
@@ -24,18 +34,9 @@ import { Client } from '@stomp/stompjs';
 import usuarioService from '../services/usuarioService';
 import salaService from '../services/salaService';
 
-/**
- * Nota:
- * - Certifique-se de ter instalado: @stomp/stompjs
- * - O endpoint WS deve aceitar Upgrade websocket em wss://tccdrakes.azurewebsites.net/ws
- * - Se seu servidor usar SockJS no backend, o endpoint base ainda normalmente é /ws.
- */
-
 export default function Sala() {
   const router = useRouter();
   const params = useLocalSearchParams();
-
-  // recebe `codigo` do navigate/web; aceita params.codigo ou params.codigoSala
   const codigo = params.codigo || params.codigoSala || null;
 
   const [usuarios, setUsuarios] = useState([]);
@@ -43,296 +44,280 @@ export default function Sala() {
   const [actionLoading, setActionLoading] = useState(false);
   const [salaInfo, setSalaInfo] = useState(null);
   const [isDonoDaSala, setIsDonoDaSala] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  // Controle de Expulsão
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+  const [showExpelModal, setShowExpelModal] = useState(false);
 
   const stompClientRef = useRef(null);
-  const isMountedRef = useRef(false);
-
-  const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-
-  // avatar map (mesma lógica)
+  
+  // Avatar Map
   const avatarMap = {
-    'bode.svg': BodeIcon,
-    bode: BodeIcon,
-    'Canetabic.svg': CanetabicIcon,
-    caneta: CanetabicIcon,
-    'Pato.svg': PatoIcon,
-    pato: PatoIcon,
+    'bode.svg': BodeIcon, bode: BodeIcon,
+    'Canetabic.svg': CanetabicIcon, caneta: CanetabicIcon,
+    'Pato.svg': PatoIcon, pato: PatoIcon,
   };
 
   const getAvatarComponent = (avatarName) => {
     if (!avatarName) return Userprofile2Icon;
-    const cleanName = String(avatarName).trim();
-    if (cleanName.startsWith('data:') || cleanName.startsWith('http')) {
-      // caso queira renderizar imagens remotas, substitua por <Image> no lugar do SVG component
-      return Userprofile2Icon;
-    }
+    const cleanName = String(avatarName).toLowerCase().replace('.svg', '').trim();
     return avatarMap[cleanName] || Userprofile2Icon;
   };
 
-  // ---------------- carregarDadosIniciais (igual ao web) ----------------
+  // ============================================================
+  // 1. CARGA INICIAL (API)
+  // ============================================================
   const carregarDadosIniciais = useCallback(async () => {
     if (!codigo) return;
-    if (!isMountedRef.current) return;
-
-    setLoading(true);
+    
     try {
+      const eu = await usuarioService.getMeuPerfil();
+      setCurrentUser(eu);
+
       const sala = await salaService.getSalaByPin(codigo);
-      if (!isMountedRef.current || !sala) return;
+      if (!sala) return;
 
       setSalaInfo(sala);
-      setIsDonoDaSala(String(sala.idUsuario) === String((await usuarioService.getMeuPerfil()).id));
+      // Converte para String para garantir comparação correta
+      setIsDonoDaSala(String(eu.id) === String(sala.idUsuario));
 
-      const participantesIds =
-        (sala.participantes && sala.participantes.map((p) => p.idUsuario)) || sala.idParticipantes || [];
+      // Monta lista de IDs
+      let listaIds = [];
+      if (sala.participantes) {
+          listaIds = sala.participantes.map(p => p.idUsuario || p.id);
+      } else if (sala.idParticipantes) {
+          listaIds = sala.idParticipantes;
+      }
 
-      if (participantesIds.length > 0) {
-        const promises = participantesIds.map((id) => usuarioService.getUsuarioById(id));
-        const results = await Promise.allSettled(promises);
+      if (!listaIds.includes(eu.id)) listaIds.push(eu.id);
 
-        if (!isMountedRef.current) return;
+      if (listaIds.length > 0) {
+        const promises = listaIds.map(id => usuarioService.getUsuarioById(id));
+        const results = await Promise.all(promises);
+        
+        const validUsers = results.filter(u => u && u.id);
+        const uniqueUsers = Array.from(new Map(validUsers.map(item => [item.id, item])).values());
 
-        const validUsers = results
-          .filter((r) => r.status === 'fulfilled' && r.value && r.value.id)
-          .map((r) => r.value);
-
-        setUsuarios(validUsers);
+        setUsuarios(uniqueUsers);
       } else {
         setUsuarios([]);
       }
     } catch (err) {
-      if (isMountedRef.current) setErrorMsg('Falha ao carregar informações da sala.');
+      console.log('Erro ao carregar lista:', err);
+      // Fallback
+      const eu = await usuarioService.getMeuPerfil();
+      setUsuarios([{ id: eu.id, name: eu.nome, avatar: eu.avatar }]);
     } finally {
-      if (isMountedRef.current) setLoading(false);
+      setLoading(false);
     }
   }, [codigo]);
 
-  // ---------------- tratar mensagens (igual ao web) ----------------
-  const tratarMensagem = (payload) => {
-    if (!payload || !payload.type) return;
+  useEffect(() => {
+      if (!codigo) {
+          router.replace('/game');
+          return;
+      }
+      carregarDadosIniciais();
+  }, [codigo]);
 
-    if (payload.type === 'JOGO_INICIADO') {
-      const { idFormulario, idSala, codigoSala } = payload;
-      // ajusta rota conforme seu app mobile; usei /jogo (como no web)
-      router.push({
-        pathname: '/jogo',
-        params: { idFormulario, idSala, codigoSala: codigoSala || codigo },
-      });
-      return;
-    }
-
-    if (payload.type === 'USUARIO_ENTROU') {
-      const novoUsuario = payload.usuario;
-      if (!novoUsuario) return;
-      setUsuarios((prev) => {
-        if (prev.find((u) => String(u.id) === String(novoUsuario.id))) return prev;
-        return [...prev, novoUsuario];
-      });
-
-      // atualiza dados completos via API
-      usuarioService
-        .getUsuarioById(novoUsuario.id)
-        .then((full) => {
-          if (isMountedRef.current && full) {
-            setUsuarios((prev) => prev.map((u) => (String(u.id) === String(full.id) ? full : u)));
-          }
-        })
-        .catch(() => {});
-      return;
-    }
-
-    if (payload.type === 'USUARIO_SAIU') {
-      setUsuarios((prev) => prev.filter((u) => String(u.id) !== String(payload.idUsuario)));
-      setUsuarioSelecionado(null);
-      return;
-    }
-
-    if (payload.type === 'SALA_FECHADA') {
-      router.replace('/game'); // mesmo comportamento do web
-      return;
-    }
-
-    if (payload.type === 'EXPULSO') {
-      router.replace('/game');
-      return;
-    }
-  };
-
-  // ---------------- efeito WebSocket / STOMP ----------------
+  // ============================================================
+  // 2. WEBSOCKET (CORRIGIDO PARA MOBILE)
+  // ============================================================
   useEffect(() => {
     if (!codigo) return;
 
-    isMountedRef.current = true;
     let client = null;
 
     const iniciarSocket = async () => {
       try {
         const eu = await usuarioService.getMeuPerfil();
         const userId = String(eu.id);
+        const token = await usuarioService.getToken();
 
-        // IMPORTANTE: usar WSS (SSL) para Azure
-        const wsUrl = 'wss://tccdrakes.azurewebsites.net/ws';
+        if (!token) {
+            console.error("❌ ERRO: Sem token para conectar no WebSocket");
+            return;
+        }
+
+        // URL específica para mobile (definida no seu Backend)
+        const wsUrl = 'wss://tccdrakes.azurewebsites.net/ws-native';
+
+        console.log(`🔌 Conectando WS em: ${wsUrl}`);
 
         client = new Client({
+          // IMPORTANTE: webSocketFactory é mais estável no React Native que brokerURL direto
           webSocketFactory: () => new WebSocket(wsUrl),
-
-          reconnectDelay: 10000,
+          
+          connectHeaders: { 
+            Authorization: `Bearer ${token}` 
+          },
+          
+          reconnectDelay: 5000,
           heartbeatIncoming: 4000,
           heartbeatOutgoing: 4000,
-
-          connectHeaders: {
-            login: userId,
-          },
-
-          debug: () => {
-            // comentei para não poluir logs; descomente se quiser ver handshake
-            // console.log(str);
-          },
+          
+          // Flags para ajudar no mobile
+          forceBinaryWSFrames: true,
+          appendMissingNULLonIncoming: true,
 
           onConnect: () => {
-            if (!isMountedRef.current) return;
-            setIsConnected(true);
+            console.log('✅ WS CONECTADO COM SUCESSO!');
 
-            const topic = `/topic/sala/${codigo}`;
-            client.subscribe(topic, (message) => {
-              if (!isMountedRef.current) return;
+            // 1. Tópico Público
+            client.subscribe(`/topic/sala/${codigo}`, async (msg) => {
               try {
-                const payload = JSON.parse(message.body);
-                tratarMensagem(payload);
-              } catch (e) {
-                // silent
-              }
-            });
+                const payload = JSON.parse(msg.body);
+                console.log('📩 SOCKET:', payload.type);
 
-            const privateTopic = `/user/queue/expulso`;
-            client.subscribe(privateTopic, (message) => {
-              if (!isMountedRef.current) return;
-              try {
-                const payload = JSON.parse(message.body);
-                if (payload?.type === 'EXPULSO') {
-                  router.replace('/game');
+                if (payload.type === "USUARIO_ENTROU") {
+                  const u = payload.usuario;
+                  
+                  setUsuarios((prev) => {
+                    if (prev.find(p => String(p.id) === String(u.id))) return prev;
+                    return [...prev, { id: u.id, name: u.nome, avatar: u.avatar }];
+                  });
+
+                  // Atualiza avatar
+                  usuarioService.getUsuarioById(u.id).then(fullUser => {
+                      if (fullUser) {
+                        setUsuarios((prev) => prev.map(p => 
+                            String(p.id) === String(fullUser.id) ? { ...p, avatar: fullUser.avatar, name: fullUser.nome } : p
+                        ));
+                      }
+                  });
+                } 
+                else if (payload.type === "USUARIO_SAIU") {
+                  setUsuarios((prev) => prev.filter(p => String(p.id) !== String(payload.idUsuario)));
                 }
-              } catch (e) {
-                // silent
+                else if (payload.type === "JOGO_INICIADO") {
+                   client.deactivate();
+                   router.push({
+                    pathname: '/partida',
+                    params: {
+                      idFormulario: payload.idFormulario,
+                      idSala: payload.idSala,
+                      codigoSala: payload.codigoSala || codigo,
+                    },
+                  });
+                }
+                else if (payload.type === "SALA_FECHADA") {
+                   Alert.alert("Aviso", "A sala foi encerrada.");
+                   router.replace('/home');
+                }
+              } catch (err) {
+                console.error("Erro JSON:", err);
               }
             });
-          },
 
+            // 2. Tópico Privado
+            client.subscribe(`/user/queue/expulso`, (msg) => {
+              try {
+                const payload = JSON.parse(msg.body);
+                if (payload?.type === 'EXPULSO') {
+                    Alert.alert("Ops!", "Você foi expulso.");
+                    router.replace('/game');
+                }
+              } catch (e) {}
+            });
+          },
+          
           onStompError: (frame) => {
-            console.warn('STOMP ERROR:', frame && frame.headers ? frame.headers.message : frame);
+             console.log('❌ Erro STOMP (Protocolo):', frame.headers['message']);
+             console.log('Detalhe:', frame.body);
           },
-
-          onWebSocketError: (evt) => {
-            console.warn('WEBSOCKET ERROR:', evt?.message ?? evt);
+          onWebSocketError: (event) => {
+             console.log('❌ Erro WebSocket (Rede/Auth):', event.message || event);
           },
-
-          onWebSocketClose: () => {
-            setIsConnected(false);
-            console.log('⚠️ WS Desconectado.');
-          },
+          onWebSocketClose: (event) => {
+             console.log('⚠️ WS Fechou. Código:', event.code, 'Motivo:', event.reason);
+          }
         });
 
         client.activate();
         stompClientRef.current = client;
+
       } catch (err) {
-        console.error('Erro iniciando socket:', err);
+        console.error('Erro fatal socket:', err);
       }
     };
 
     iniciarSocket();
 
     return () => {
-      isMountedRef.current = false;
-      setIsConnected(false);
-      if (stompClientRef.current?.active) stompClientRef.current.deactivate();
+      if (stompClientRef.current) stompClientRef.current.deactivate();
     };
-  }, [codigo, router]);
+  }, [codigo]);
 
-  // ---------------- trigger de carga inicial (igual web) ----------------
-  useEffect(() => {
-    if (!codigo) {
-      router.replace('/game');
-      return;
-    }
-    isMountedRef.current = true;
-    carregarDadosIniciais();
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, [codigo, carregarDadosIniciais, router]);
-
-  // ---------------- contingência: se removido da lista, forçamos saída ----------------
-  useEffect(() => {
-    if (loading || !salaInfo) return;
-    (async () => {
-      try {
-        const eu = await usuarioService.getMeuPerfil();
-        const userStillInList = usuarios.some((p) => String(p.id) === String(eu.id));
-        if (!isDonoDaSala && !userStillInList && !actionLoading) {
-          router.replace('/game');
-        }
-      } catch (e) {
-        // ignore
-      }
-    })();
-  }, [usuarios, loading, salaInfo, isDonoDaSala, actionLoading, router]);
-
-  // ---------------- ações: iniciar / desmanchar / expulsar ----------------
-  const handleIniciar = async () => {
-    if (!salaInfo || !isDonoDaSala || actionLoading || !isConnected) return;
+  // AÇÕES
+  const handleDesmanchar = async () => {
     setActionLoading(true);
     try {
       const eu = await usuarioService.getMeuPerfil();
-      const dest = `/app/sala/${codigo}/iniciar`;
-      stompClientRef.current.publish({
-        destination: dest,
-        body: JSON.stringify({ idUsuario: eu.id }),
-      });
-    } catch (err) {
-      setErrorMsg('Falha ao enviar comando de iniciar jogo.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
+      const idSala = salaInfo?.idSala || salaInfo?.id;
 
-  const handleDesmanchar = async () => {
-    try {
-      setActionLoading(true);
-      const eu = await usuarioService.getMeuPerfil();
-      if (!salaInfo || !eu) return;
-
-      if (String(salaInfo.idUsuario) === String(eu.id)) {
-        // dono fecha sala
-        await salaService.fecharSala(salaInfo.idSala || salaInfo.id);
-        router.replace('/game');
+      if (isDonoDaSala) {
+        await salaService.fecharSala(idSala);
       } else {
-        // sai da sala
         await salaService.sairDaSala(codigo, eu.id);
         router.replace('/game');
       }
     } catch (err) {
-      setErrorMsg('Erro ao sair/desmanchar. Tente novamente.');
+      console.log("Erro ao sair, forçando saída local:", err);
+      router.replace('/game');
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleExpulsar = async (idUsuarioExpulso) => {
-    if (!salaInfo || !isDonoDaSala || actionLoading) return;
+  const handleIniciar = async () => {
+    if (!isDonoDaSala) return;
+    
+    // Para teste pode comentar essa validação
+    if (usuarios.length < 1) { 
+        return Alert.alert("Aguarde", "Espere mais jogadores.");
+    }
+
     setActionLoading(true);
     try {
-      await salaService.expulsarUsuario(codigo, idUsuarioExpulso);
-      setUsuarios((prev) => prev.filter((u) => String(u.id) !== String(idUsuarioExpulso)));
+      const eu = await usuarioService.getMeuPerfil();
+      const dest = `/app/sala/${codigo}/iniciar`;
+      
+      // Tenta enviar via Socket primeiro
+      if (stompClientRef.current && stompClientRef.current.connected) {
+          stompClientRef.current.publish({
+            destination: dest,
+            body: JSON.stringify({ idUsuario: eu.id }),
+          });
+      } else {
+          // Fallback API REST se socket falhar
+          await salaService.iniciarSala(codigo, eu.id);
+      }
     } catch (err) {
-      setErrorMsg('Falha ao expulsar usuário. Apenas o dono pode fazer isso.');
+      Alert.alert("Erro", "Falha ao iniciar. Tente novamente.");
     } finally {
       setActionLoading(false);
     }
   };
 
-  // ---------------- UI ----------------
+  const handleExpulsar = async (idUsuario) => {
+    setShowExpelModal(false);
+    if (!isDonoDaSala) return;
+    
+    setActionLoading(true);
+    try {
+      await salaService.expulsarUsuario(codigo, idUsuario);
+      // Remove localmente para feedback instantâneo
+      setUsuarios(prev => prev.filter(u => String(u.id) !== String(idUsuario)));
+    } catch (err) {
+      Alert.alert("Erro", "Falha ao expulsar.");
+    } finally {
+      setActionLoading(false);
+      setUsuarioSelecionado(null);
+    }
+  };
+
+  // UI
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#1CB0FC" />
@@ -341,126 +326,110 @@ export default function Sala() {
       <View style={styles.container}>
         <View style={styles.headerRow}>
           <Text style={styles.codeLabel}>CODE:</Text>
-          <Text style={styles.codeValue}>{codigo || 'ERRO'}</Text>
+          <Text style={styles.codeValue}>{codigo}</Text>
         </View>
-
-        <Text style={styles.roomName}>{salaInfo?.nomeSala || 'Carregando...'}</Text>
+        <Text style={styles.roomName}>{salaInfo?.nomeSala || '...'}</Text>
 
         <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.btnDanger}
+          <TouchableOpacity 
+            style={styles.btnDanger} 
             onPress={handleDesmanchar}
-            disabled={actionLoading || !salaInfo}
+            disabled={actionLoading}
           >
-            <Text style={styles.btnText}>{isDonoDaSala ? 'DESMANCHAR SALA' : 'SAIR DA SALA'}</Text>
+            <Text style={styles.btnText}>{isDonoDaSala ? 'DESMANCHAR SALA' : 'SAIR'}</Text>
           </TouchableOpacity>
 
           {isDonoDaSala && (
             <TouchableOpacity
-              style={[styles.btnWarning, { marginLeft: 12 }]}
+              style={[styles.btnWarning, { marginLeft: 10 }]}
               onPress={handleIniciar}
-              disabled={loading || actionLoading || usuarios.length < 1 || !isConnected}
+              disabled={actionLoading || loading}
             >
               <Text style={styles.btnText}>INICIAR</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        {loading ? (
+        {loading && usuarios.length === 0 ? (
           <ActivityIndicator size="large" color="#FFF" style={{ marginTop: 30 }} />
-        ) : usuarios.length === 0 ? (
-          <Text style={styles.msg}>Aguardando jogadores...</Text>
         ) : (
           <ScrollView contentContainerStyle={styles.playersGrid}>
-            {usuarios.map((p) => {
-              const Avatar = getAvatarComponent(p.avatar);
-              return (
-                <View key={p.id} style={styles.playerCard}>
-                  <View style={styles.avatarWrapper}>
-                    <View style={styles.avatarCircle}>
-                      <Avatar width={60} height={60} />
+            {usuarios.length === 0 ? (
+                <Text style={styles.msg}>Aguardando jogadores...</Text>
+            ) : (
+                usuarios.map((p) => {
+                const Avatar = getAvatarComponent(p.avatar);
+                return (
+                    <TouchableOpacity
+                        key={p.id}
+                        style={styles.playerCard}
+                        onLongPress={() => {
+                            if (isDonoDaSala && String(p.id) !== String(currentUser?.id)) {
+                                setUsuarioSelecionado(p);
+                                setShowExpelModal(true);
+                            }
+                        }}
+                        activeOpacity={1}
+                    >
+                    <View style={styles.avatarWrapper}>
+                        <View style={styles.avatarCircle}>
+                        <Avatar width={60} height={60} />
+                        </View>
                     </View>
-                  </View>
-
-                  <Text style={styles.playerName}>{p.nome || p.name || 'Jogador'}</Text>
-
-                  {isDonoDaSala && String(p.id) !== String((usuarioService.getMeuPerfil && '')) ? (
-                    <TouchableOpacity style={styles.expelBtn} onPress={() => handleExpulsar(p.id)}>
-                      <Text style={styles.expelText}>Expulsar</Text>
+                    <Text style={styles.playerName} numberOfLines={1}>{p.nome}</Text>
                     </TouchableOpacity>
-                  ) : null}
-                </View>
-              );
-            })}
+                );
+                })
+            )}
           </ScrollView>
         )}
 
-        {!!errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
+        {/* Modal Expulsão */}
+        <Modal transparent visible={showExpelModal} animationType="fade">
+          <Pressable style={styles.modalOverlay} onPress={() => setShowExpelModal(false)}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Confirmar Expulsão</Text>
+              <Text style={styles.modalMessage}>Remover {usuarioSelecionado?.nome}?</Text>
+              <View style={styles.modalActions}>
+                <TouchableOpacity style={styles.modalCancel} onPress={() => setShowExpelModal(false)}>
+                  <Text style={styles.modalCancelText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.modalConfirm} onPress={() => handleExpulsar(usuarioSelecionado.id)}>
+                  <Text style={styles.modalConfirmText}>Sim, remover</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Pressable>
+        </Modal>
       </View>
     </SafeAreaView>
   );
 }
 
-// ---------------- styles ----------------
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#1CB0FC' },
   container: { flex: 1, padding: 16, alignItems: 'center' },
-
   headerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
-  codeLabel: { color: '#FFF', fontSize: 20, marginRight: 8, fontWeight: '600' },
+  codeLabel: { color: '#FFF', fontSize: 20, marginRight: 8, fontWeight: 'bold' },
   codeValue: { color: '#FFF', fontSize: 28, fontWeight: '700' },
-  roomName: { color: 'rgba(255,255,255,0.9)', fontSize: 16, marginTop: 8 },
-
-  actions: { flexDirection: 'row', marginTop: 18, marginBottom: 12 },
-  btnDanger: {
-    backgroundColor: '#FF0000',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
-  btnWarning: {
-    backgroundColor: '#FF9D00',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
+  roomName: { color: 'rgba(255,255,255,0.9)', fontSize: 17, marginTop: 5 },
+  actions: { flexDirection: 'row', marginTop: 14, marginBottom: 14 },
+  btnDanger: { backgroundColor: '#FF0000', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10 },
+  btnWarning: { backgroundColor: '#FF9D00', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10 },
   btnText: { color: '#FFF', fontWeight: '700' },
-
-  playersGrid: {
-    width: '100%',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    paddingBottom: 120,
-    gap: 12,
-  },
-
-  playerCard: {
-    width: 140,
-    height: 120,
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    margin: 10,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingBottom: 12,
-  },
-
+  playersGrid: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', paddingBottom: 80, gap: 12 },
+  playerCard: { width: 140, height: 100, backgroundColor: '#FFF', borderRadius: 14, margin: 10, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12, marginTop: 25 },
   avatarWrapper: { position: 'absolute', top: -30, left: 0, right: 0, alignItems: 'center' },
-  avatarCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#F0F0F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
+  avatarCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center', elevation: 4 },
   playerName: { marginTop: 12, fontWeight: '600', color: '#333' },
-
-  expelBtn: { marginTop: 6, backgroundColor: '#ffdddd', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 6 },
-  expelText: { color: '#cc0000', fontWeight: '700' },
-
-  msg: { marginTop: 30, color: '#fff' },
-  error: { marginTop: 12, color: '#ffdddd' },
+  msg: { marginTop: 30, color: '#FFF' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalContent: { width: 280, backgroundColor: '#FFF', borderRadius: 12, padding: 20, alignItems: 'center' },
+  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  modalMessage: { fontSize: 16, marginBottom: 20, textAlign: 'center' },
+  modalActions: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+  modalCancel: { backgroundColor: '#ccc', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
+  modalCancelText: { fontWeight: '700', color: '#333' },
+  modalConfirm: { backgroundColor: '#FF0000', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
+  modalConfirmText: { fontWeight: '700', color: '#FFF' },
 });
