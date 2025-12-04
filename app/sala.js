@@ -1,6 +1,8 @@
 // app/sala.js
 
-// 1. POLYFILL OBRIGATÓRIO (MANTENHA NO TOPO)
+// ====================================================================
+// 1. POLYFILL (ESSENCIAL PARA O WEBSOCKET NO REACT NATIVE)
+// ====================================================================
 import * as TextEncoding from 'text-encoding';
 
 if (typeof global.TextEncoder === 'undefined') {
@@ -37,6 +39,7 @@ import salaService from '../services/salaService';
 export default function Sala() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  // Garante que pega o código de onde vier
   const codigo = params.codigo || params.codigoSala || null;
 
   const [usuarios, setUsuarios] = useState([]);
@@ -50,6 +53,7 @@ export default function Sala() {
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
   const [showExpelModal, setShowExpelModal] = useState(false);
 
+  // Referência para o cliente do socket
   const stompClientRef = useRef(null);
   
   // Avatar Map
@@ -72,17 +76,18 @@ export default function Sala() {
     if (!codigo) return;
     
     try {
+      // 1. Busca quem sou eu
       const eu = await usuarioService.getMeuPerfil();
       setCurrentUser(eu);
 
+      // 2. Busca a sala
       const sala = await salaService.getSalaByPin(codigo);
       if (!sala) return;
 
       setSalaInfo(sala);
-      // Converte para String para garantir comparação correta
       setIsDonoDaSala(String(eu.id) === String(sala.idUsuario));
 
-      // Monta lista de IDs
+      // 3. Monta lista de IDs
       let listaIds = [];
       if (sala.participantes) {
           listaIds = sala.participantes.map(p => p.idUsuario || p.id);
@@ -90,8 +95,10 @@ export default function Sala() {
           listaIds = sala.idParticipantes;
       }
 
+      // Garante que EU estou na lista
       if (!listaIds.includes(eu.id)) listaIds.push(eu.id);
 
+      // 4. Busca detalhes
       if (listaIds.length > 0) {
         const promises = listaIds.map(id => usuarioService.getUsuarioById(id));
         const results = await Promise.all(promises);
@@ -100,14 +107,14 @@ export default function Sala() {
         const uniqueUsers = Array.from(new Map(validUsers.map(item => [item.id, item])).values());
 
         setUsuarios(uniqueUsers);
-      } else {
-        setUsuarios([]);
       }
     } catch (err) {
       console.log('Erro ao carregar lista:', err);
       // Fallback
-      const eu = await usuarioService.getMeuPerfil();
-      setUsuarios([{ id: eu.id, name: eu.nome, avatar: eu.avatar }]);
+      try {
+        const eu = await usuarioService.getMeuPerfil();
+        setUsuarios([{ id: eu.id, name: eu.nome, avatar: eu.avatar }]);
+      } catch(e){}
     } finally {
       setLoading(false);
     }
@@ -115,14 +122,14 @@ export default function Sala() {
 
   useEffect(() => {
       if (!codigo) {
-          router.replace('/game');
+          router.replace('/jogo');
           return;
       }
       carregarDadosIniciais();
   }, [codigo]);
 
   // ============================================================
-  // 2. WEBSOCKET (CORRIGIDO PARA MOBILE)
+  // 2. WEBSOCKET
   // ============================================================
   useEffect(() => {
     if (!codigo) return;
@@ -134,51 +141,44 @@ export default function Sala() {
         const eu = await usuarioService.getMeuPerfil();
         const userId = String(eu.id);
         const token = await usuarioService.getToken();
-
-        if (!token) {
-            console.error("❌ ERRO: Sem token para conectar no WebSocket");
-            return;
-        }
-
-        // URL específica para mobile (definida no seu Backend)
+        
+        // Endpoint Nativo
         const wsUrl = 'wss://tccdrakes.azurewebsites.net/ws-native';
 
-        console.log(`🔌 Conectando WS em: ${wsUrl}`);
+        console.log("🔌 Conectando WS...");
 
         client = new Client({
-          // IMPORTANTE: webSocketFactory é mais estável no React Native que brokerURL direto
-          webSocketFactory: () => new WebSocket(wsUrl),
-          
-          connectHeaders: { 
-            Authorization: `Bearer ${token}` 
-          },
-          
+          brokerURL: wsUrl,
+          connectHeaders: { Authorization: `Bearer ${token}` },
           reconnectDelay: 5000,
           heartbeatIncoming: 4000,
           heartbeatOutgoing: 4000,
           
-          // Flags para ajudar no mobile
+          // Flags importantes para React Native
           forceBinaryWSFrames: true,
           appendMissingNULLonIncoming: true,
 
           onConnect: () => {
-            console.log('✅ WS CONECTADO COM SUCESSO!');
+            console.log('✅ WS CONECTADO!');
 
-            // 1. Tópico Público
-            client.subscribe(`/topic/sala/${codigo}`, async (msg) => {
+            // --- TÓPICO PRINCIPAL DA SALA ---
+            client.subscribe(`/topic/sala/${codigo}`, (msg) => {
               try {
                 const payload = JSON.parse(msg.body);
                 console.log('📩 SOCKET:', payload.type);
 
+                // CASO 1: USUARIO ENTROU
                 if (payload.type === "USUARIO_ENTROU") {
                   const u = payload.usuario;
                   
                   setUsuarios((prev) => {
+                    // Evita duplicar se já existe
                     if (prev.find(p => String(p.id) === String(u.id))) return prev;
+                    // Adiciona imediatamente
                     return [...prev, { id: u.id, name: u.nome, avatar: u.avatar }];
                   });
 
-                  // Atualiza avatar
+                  // Busca detalhes completos (Avatar) em segundo plano
                   usuarioService.getUsuarioById(u.id).then(fullUser => {
                       if (fullUser) {
                         setUsuarios((prev) => prev.map(p => 
@@ -187,12 +187,36 @@ export default function Sala() {
                       }
                   });
                 } 
+                
+                // CASO 2: LISTA COMPLETA ATUALIZADA (Seu backend envia isso também!)
+                else if (payload.type === "USUARIOS_ATUALIZADOS") {
+                    const listaNova = payload.participantes || []; // Ajuste conforme seu DTO backend
+                    // O backend manda uma lista de payloads simplificados
+                    setUsuarios(prev => {
+                        // Mescla a lista nova com os avatares que já temos para não piscar
+                        const mapaAtual = new Map(prev.map(p => [p.id, p]));
+                        
+                        return listaNova.map(novo => {
+                            const existente = mapaAtual.get(novo.id);
+                            return {
+                                id: novo.id,
+                                name: novo.nome,
+                                // Mantém avatar antigo se o novo vier nulo, ou usa o novo
+                                avatar: novo.avatar || (existente ? existente.avatar : null)
+                            };
+                        });
+                    });
+                }
+
+                // CASO 3: USUARIO SAIU
                 else if (payload.type === "USUARIO_SAIU") {
                   setUsuarios((prev) => prev.filter(p => String(p.id) !== String(payload.idUsuario)));
                 }
+                
+                // CASO 4: JOGO INICIOU
                 else if (payload.type === "JOGO_INICIADO") {
                    client.deactivate();
-                   router.push({
+                   router.replace({
                     pathname: '/partida',
                     params: {
                       idFormulario: payload.idFormulario,
@@ -201,44 +225,52 @@ export default function Sala() {
                     },
                   });
                 }
+                
+                // CASO 5: SALA FECHADA
                 else if (payload.type === "SALA_FECHADA") {
                    Alert.alert("Aviso", "A sala foi encerrada.");
-                   router.replace('/home');
+                   router.replace('/jogo');
                 }
+
               } catch (err) {
                 console.error("Erro JSON:", err);
               }
             });
 
-            // 2. Tópico Privado
+            // --- TÓPICO ESPECÍFICO DE ATUALIZAÇÃO (Backup) ---
+            // Seu backend envia para cá também no SalaService.java
+            client.subscribe(`/topic/sala/${codigo}/atualizar`, (msg) => {
+                try {
+                    const payload = JSON.parse(msg.body);
+                    if (payload.type === "USUARIOS_ATUALIZADOS") {
+                        console.log("🔄 Recebida lista completa atualizada");
+                        // Recarrega via API para garantir integridade total
+                        carregarDadosIniciais();
+                    }
+                } catch(e) {}
+            });
+
+            // --- TÓPICO PRIVADO ---
             client.subscribe(`/user/queue/expulso`, (msg) => {
               try {
                 const payload = JSON.parse(msg.body);
                 if (payload?.type === 'EXPULSO') {
                     Alert.alert("Ops!", "Você foi expulso.");
-                    router.replace('/game');
+                    router.replace('/jogo');
                 }
               } catch (e) {}
             });
           },
           
-          onStompError: (frame) => {
-             console.log('❌ Erro STOMP (Protocolo):', frame.headers['message']);
-             console.log('Detalhe:', frame.body);
-          },
-          onWebSocketError: (event) => {
-             console.log('❌ Erro WebSocket (Rede/Auth):', event.message || event);
-          },
-          onWebSocketClose: (event) => {
-             console.log('⚠️ WS Fechou. Código:', event.code, 'Motivo:', event.reason);
-          }
+          onStompError: (f) => console.log('Erro STOMP:', f.headers.message),
+          onWebSocketClose: () => console.log('WS Fechou')
         });
 
         client.activate();
         stompClientRef.current = client;
 
       } catch (err) {
-        console.error('Erro fatal socket:', err);
+        console.error('Erro socket:', err);
       }
     };
 
@@ -247,9 +279,11 @@ export default function Sala() {
     return () => {
       if (stompClientRef.current) stompClientRef.current.deactivate();
     };
-  }, [codigo]);
+  }, [codigo, carregarDadosIniciais]); // Incluí carregarDadosIniciais nas dependências
 
+  // ============================================================
   // AÇÕES
+  // ============================================================
   const handleDesmanchar = async () => {
     setActionLoading(true);
     try {
@@ -260,11 +294,11 @@ export default function Sala() {
         await salaService.fecharSala(idSala);
       } else {
         await salaService.sairDaSala(codigo, eu.id);
-        router.replace('/game');
+        router.replace('/jogo');
       }
     } catch (err) {
-      console.log("Erro ao sair, forçando saída local:", err);
-      router.replace('/game');
+      console.log("Erro ao sair:", err);
+      router.replace('/jogo');
     } finally {
       setActionLoading(false);
     }
@@ -273,7 +307,6 @@ export default function Sala() {
   const handleIniciar = async () => {
     if (!isDonoDaSala) return;
     
-    // Para teste pode comentar essa validação
     if (usuarios.length < 1) { 
         return Alert.alert("Aguarde", "Espere mais jogadores.");
     }
@@ -283,18 +316,17 @@ export default function Sala() {
       const eu = await usuarioService.getMeuPerfil();
       const dest = `/app/sala/${codigo}/iniciar`;
       
-      // Tenta enviar via Socket primeiro
       if (stompClientRef.current && stompClientRef.current.connected) {
           stompClientRef.current.publish({
             destination: dest,
             body: JSON.stringify({ idUsuario: eu.id }),
           });
       } else {
-          // Fallback API REST se socket falhar
-          await salaService.iniciarSala(codigo, eu.id);
+          // Fallback via API
+          await salaService.iniciarSala(codigo, eu.id); // Se existir no service
       }
     } catch (err) {
-      Alert.alert("Erro", "Falha ao iniciar. Tente novamente.");
+      Alert.alert("Erro", "Falha ao iniciar.");
     } finally {
       setActionLoading(false);
     }
@@ -317,7 +349,9 @@ export default function Sala() {
     }
   };
 
-  // UI
+  // ============================================================
+  // RENDERIZAÇÃO
+  // ============================================================
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#1CB0FC" />
@@ -328,7 +362,7 @@ export default function Sala() {
           <Text style={styles.codeLabel}>CODE:</Text>
           <Text style={styles.codeValue}>{codigo}</Text>
         </View>
-        <Text style={styles.roomName}>{salaInfo?.nomeSala || '...'}</Text>
+        <Text style={styles.roomName}>{salaInfo?.nomeSala || 'Carregando...'}</Text>
 
         <View style={styles.actions}>
           <TouchableOpacity 
