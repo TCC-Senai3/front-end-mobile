@@ -142,11 +142,32 @@ export const expulsarUsuario = async (idSala, idUsuario, token) => {
   }
 };
 
-export default {
+/**
+ * Iniciar Sala
+ * Backend: PUT /salas/{codigoSala}/iniciar/{idUsuario}
+ */
+export const iniciarSala = async (codigoSala, idUsuario, token) => {
+  try {
+    const response = await api.put(
+      `/salas/${codigoSala}/iniciar/${idUsuario}`,
+      {}, // Corpo vazio
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("❌ Erro ao iniciar sala:", error);
+    throw error;
+  }
+};
+
+const salaService = {
   createSala,
   getSalaByPin,
   entrarNaSala,
   sairDaSala,
   fecharSala,
   expulsarUsuario,
+  iniciarSala,
 };
+
+export default salaService;

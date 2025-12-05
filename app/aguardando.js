@@ -8,8 +8,8 @@ import CustomHeader from '../components/CustomHeader';
 
 // --- IMPORTS DO WEBSOCKET ---
 import { Client } from '@stomp/stompjs';
-import * as TextEncoding from 'text-encoding'; // Polyfill necessário para React Native
-import usuarioService from '../services/usuarioService'; // Para pegar o ID do usuario
+import * as TextEncoding from 'text-encoding';
+import usuarioService from '../services/usuarioService';
 
 // Hack para o STOMP funcionar no React Native
 if (!global.TextEncoder) {
@@ -21,9 +21,6 @@ const { width, height } = Dimensions.get('window');
 
 export default function Aguardando() {
   const router = useRouter();
-  
-  // Recebe parâmetros da rota (se vier da criação ou entrada de sala)
-  // Se você usa store global, pode manter o getPin(), mas params é mais seguro na navegação
   const params = useLocalSearchParams();
   const [codigoSala, setCodigoSala] = useState(params.codigoSala || ''); 
   
@@ -31,60 +28,59 @@ export default function Aguardando() {
   const stompClient = useRef(null);
 
   useEffect(() => {
-    // Se não tiver código, tenta pegar de algum lugar ou volta
-    if (!codigoSala) {
-        // Tenta pegar da store se necessário, ou volta
-        // setCodigoSala(getPin()); 
-        return;
-    }
+    if (!codigoSala) return;
 
     const conectarWebSocket = async () => {
       try {
-        // 1. Pega dados do usuário para o header de conexão
+        // 1. Pega token e perfil
         const userProfile = await usuarioService.getMeuPerfil();
-        const userId = String(userProfile.id);
+        const token = await usuarioService.getToken(); // ✅ Token necessário
 
-        // 2. Configura o Cliente STOMP
-        // Nota: Em React Native/Mobile, usamos 'wss://' e apontamos direto para o endpoint websocket
-        // O endpoint do seu backend é /ws, então o nativo geralmente é /ws/websocket
-        const socketUrl = "wss://tccdrakes.azurewebsites.net/ws/websocket";
+        if (!token) {
+            setStatus("Erro de autenticação.");
+            return;
+        }
+
+        // 2. Configura o Cliente STOMP (Endpoint Nativo)
+        const socketUrl = "wss://tccdrakes.azurewebsites.net/ws-native";
+
+        console.log("🔌 AGUARDANDO: Conectando WS...");
 
         const client = new Client({
-          brokerURL: socketUrl,
+          // Factory explícito para React Native
+          webSocketFactory: () => new WebSocket(socketUrl),
+          
+          // Header de Autenticação Correto
           connectHeaders: {
-            login: userId,
+            Authorization: `Bearer ${token}`,
           },
-          // Configurações para estabilidade no mobile
+          
           reconnectDelay: 5000,
           heartbeatIncoming: 4000,
           heartbeatOutgoing: 4000,
           forceBinaryWSFrames: true,
           appendMissingNULLonIncoming: true,
           
-          debug: (str) => {
-            // console.log('STOMP: ' + str); // Descomente para debug
-          },
-
           onConnect: () => {
-            console.log('CONECTADO AO WEBSOCKET!');
+            console.log('✅ AGUARDANDO: Conectado!');
             setStatus('Aguardando o host iniciar...');
 
             // 3. Se inscreve no tópico da sala
             client.subscribe(`/topic/sala/${codigoSala}`, (message) => {
               try {
                 const payload = JSON.parse(message.body);
-                console.log('Mensagem recebida:', payload);
+                console.log('📩 Evento:', payload.type);
 
                 // --- LÓGICA DO JOGO ---
                 if (payload.type === "JOGO_INICIADO") {
                   const { idFormulario, idSala, codigoSala } = payload;
                   
-                  // Desconecta antes de navegar para não vazar memória
-                  client.deactivate();
+                  // Desconecta antes de navegar
+                  if (stompClient.current) stompClient.current.deactivate();
 
-                  // Navega para a tela do jogo passando os dados
+                  // Navega para a tela do jogo
                   router.replace({
-                    pathname: '/jogo',
+                    pathname: '/partida',
                     params: { 
                       idFormulario, 
                       idSala, 
@@ -94,10 +90,9 @@ export default function Aguardando() {
                 } 
                 else if (payload.type === "SALA_FECHADA") {
                   Alert.alert("Atenção", "A sala foi fechada pelo host.");
-                  client.deactivate();
+                  if (stompClient.current) stompClient.current.deactivate();
                   router.replace('/home');
                 }
-                // Você pode adicionar USUARIO_ENTROU aqui se quiser mostrar lista de quem tá na sala
 
               } catch (e) {
                 console.error("Erro ao processar mensagem:", e);
@@ -107,7 +102,7 @@ export default function Aguardando() {
 
           onStompError: (frame) => {
             console.error('Broker error: ' + frame.headers['message']);
-            setStatus('Erro de conexão. Tentando reconectar...');
+            setStatus('Reconectando...');
           },
           
           onWebSocketClose: () => {
@@ -115,7 +110,6 @@ export default function Aguardando() {
           }
         });
 
-        // Inicia a conexão
         client.activate();
         stompClient.current = client;
 
@@ -127,7 +121,7 @@ export default function Aguardando() {
 
     conectarWebSocket();
 
-    // Cleanup ao sair da tela: desconectar
+    // Cleanup ao sair da tela
     return () => {
       if (stompClient.current) {
         stompClient.current.deactivate();
@@ -139,8 +133,7 @@ export default function Aguardando() {
     if (stompClient.current) {
       stompClient.current.deactivate();
     }
-    // Aqui idealmente você chamaria uma API para avisar que saiu da sala antes de navegar
-    router.replace('/home'); // ou voltar para onde digita o pin
+    router.replace('/home'); 
   };
 
   return (
@@ -252,7 +245,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   inputText: {
-    fontFamily: 'Poppins-SemiBold', // Corrigido para nome da fonte padrão se não tiver alias
+    fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
     color: '#1CB0FC',
   },
@@ -284,7 +277,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   exitText: {
-    fontFamily: 'Blinker-Bold', // Ajuste conforme suas fontes
+    fontFamily: 'Blinker-Bold',
     fontSize: 16,
     lineHeight: 19,
     textAlign: 'center',
