@@ -53,17 +53,28 @@ export default function Sala() {
 
   const stompClientRef = useRef(null);
 
-  // Avatar Map
+  // ============================================================
+  // AVATARS — CORREÇÃO COMPLETA
+  // ============================================================
   const avatarMap = {
-    'bode.svg': BodeIcon, bode: BodeIcon,
-    'Canetabic.svg': CanetabicIcon, caneta: CanetabicIcon,
-    'Pato.svg': PatoIcon, pato: PatoIcon,
+    'bode': BodeIcon,
+    'bode.svg': BodeIcon,
+    'pato': PatoIcon,
+    'pato.svg': PatoIcon,
+    'canetabic': CanetabicIcon,
+    'canetabic.svg': CanetabicIcon,
+    'caneta': CanetabicIcon,
   };
 
   const getAvatarComponent = (avatarName) => {
     if (!avatarName) return Userprofile2Icon;
-    const cleanName = String(avatarName).toLowerCase().replace('.svg', '').trim();
-    return avatarMap[cleanName] || Userprofile2Icon;
+
+    const clean = String(avatarName)
+      .trim()
+      .toLowerCase()
+      .replace('.svg', '');
+
+    return avatarMap[clean] || Userprofile2Icon;
   };
 
   // ============================================================
@@ -93,15 +104,17 @@ export default function Sala() {
       if (!listaIds.includes(eu.id)) listaIds.push(eu.id);
 
       if (listaIds.length > 0) {
-        const promises = listaIds.map(id => usuarioService.getUsuarioById(id));
-        const results = await Promise.all(promises);
+        const results = await Promise.all(
+          listaIds.map(id => usuarioService.getUsuarioById(id))
+        );
 
-        const validUsers = results.filter(u => u && u.id);
-        const uniqueUsers = Array.from(new Map(validUsers.map(item => [item.id, item])).values());
-        setUsuarios(uniqueUsers);
+        const valid = results.filter(u => u && u.id);
+        const unique = Array.from(new Map(valid.map(i => [i.id, i])).values());
+
+        setUsuarios(unique);
       }
+
     } catch (err) {
-      console.log('Erro ao carregar lista:', err);
       try {
         const eu = await usuarioService.getMeuPerfil();
         setUsuarios([{ id: eu.id, nome: eu.nome, avatar: eu.avatar }]);
@@ -145,41 +158,38 @@ export default function Sala() {
           onConnect: () => {
             console.log('WS conectado');
 
-            // -------- SUBSCRIÇÃO DA SALA --------
+            // ---------- SUBSCRIBE DA SALA ----------
             client.subscribe(`/topic/sala/${codigo}`, (msg) => {
               try {
                 const payload = JSON.parse(msg.body);
 
                 // =====================================================
-                // 🔵 USUARIO ENTROU — AQUI ESTÁ A CORREÇÃO COMPLETA
+                // 🔵 USUARIO ENTROU — CORREÇÃO DEFINITIVA DO AVATAR
                 // =====================================================
                 if (payload.type === "USUARIO_ENTROU") {
                   const u = payload.usuario;
 
-                  // 1) Adiciona de imediato com avatar recebido
-                  setUsuarios((prev) => {
-                    if (prev.find(p => String(p.id) === String(u.id))) return prev;
+                  // 1) Já adiciona rápido
+                  setUsuarios(prev => {
+                    if (prev.some(p => p.id === u.id)) return prev;
 
-                    return [
-                      ...prev,
-                      {
-                        id: u.id,
-                        nome: u.nome,
-                        avatar: u.avatar ?? null, // GARANTE NUNCA FICAR SEM
-                      }
-                    ];
+                    return [...prev, {
+                      id: u.id,
+                      nome: u.nome,
+                      avatar: u.avatar ?? null
+                    }];
                   });
 
-                  // 2) Completa com avatar REAL do banco
+                  // 2) Busca versão completa no banco
                   usuarioService.getUsuarioById(u.id).then(full => {
                     if (full) {
                       setUsuarios(prev =>
                         prev.map(p =>
-                          String(p.id) === String(full.id)
-                            ? {
+                          p.id === full.id
+                            ? { 
                                 ...p,
                                 nome: full.nome,
-                                avatar: full.avatar ?? p.avatar, // GARANTE QUE FICA
+                                avatar: full.avatar || p.avatar
                               }
                             : p
                         )
@@ -189,20 +199,17 @@ export default function Sala() {
                 }
 
                 // =====================================================
-                // Lista completa da sala
+                // Lista completa atualizada
                 // =====================================================
                 else if (payload.type === "USUARIOS_ATUALIZADOS") {
-                  const nova = payload.participantes || [];
+                  const lista = payload.participantes || [];
                   setUsuarios(prev => {
-                    const atual = new Map(prev.map(p => [p.id, p]));
-                    return nova.map(novo => {
-                      const exist = atual.get(novo.id);
-                      return {
-                        id: novo.id,
-                        nome: novo.nome,
-                        avatar: novo.avatar || exist?.avatar || null,
-                      };
-                    });
+                    const old = new Map(prev.map(u => [u.id, u]));
+                    return lista.map(n => ({
+                      id: n.id,
+                      nome: n.nome,
+                      avatar: n.avatar || old.get(n.id)?.avatar || null
+                    }));
                   });
                 }
 
@@ -222,263 +229,418 @@ export default function Sala() {
                       idFormulario: payload.idFormulario,
                       idSala: payload.idSala,
                       codigoSala: payload.codigoSala || codigo,
-                },
-              });
-            }
+                    },
+                  });
+                }
 
-            // =====================================================
-            else if (payload.type === "SALA_FECHADA") {
-              Alert.alert("Aviso", "A sala foi encerrada.");
-              router.replace('/game');
-            }
+                // =====================================================
+                else if (payload.type === "SALA_FECHADA") {
+                  Alert.alert("Aviso", "A sala foi encerrada.");
+                  router.replace('/game');
+                }
 
-          } catch (err) {
-            console.log("Erro JSON:", err);
-          }
+              } catch (err) {
+                console.log("Erro JSON:", err);
+              }
+            });
+
+            // ---------- TÓPICO PRIVADO ----------
+            client.subscribe(`/user/queue/expulso`, (msg) => {
+              try {
+                const payload = JSON.parse(msg.body);
+                if (payload?.type === 'EXPULSO') {
+                  Alert.alert("Ops!", "Você foi expulso.");
+                  router.replace('/game');
+                }
+              } catch (e) {}
+            });
+          },
         });
 
-        // -------- TÓPICO PRIVADO --------
-        client.subscribe(`/user/queue/expulso`, (msg) => {
-          try {
-            const payload = JSON.parse(msg.body);
-            if (payload?.type === 'EXPULSO') {
-              Alert.alert("Ops!", "Você foi expulso.");
-              router.replace('/game');
-            }
-          } catch (e) {}
-        });
+        client.activate();
+        stompClientRef.current = client;
+
+      } catch (err) {
+        console.error('Erro socket:', err);
       }
-    });
+    };
 
-    client.activate();
-    stompClientRef.current = client;
+    iniciarSocket();
 
-  } catch (err) {
-    console.error('Erro socket:', err);
-  }
-};
+    return () => {
+      if (stompClientRef.current) stompClientRef.current.deactivate();
+    };
+  }, [codigo]);
 
-iniciarSocket();
+  // ============================================================
+  // AÇÕES
+  // ============================================================
+  const handleDesmanchar = async () => {
+    setActionLoading(true);
+    try {
+      const eu = await usuarioService.getMeuPerfil();
+      const token = await usuarioService.getToken();
+      const idSala = salaInfo?.idSala || salaInfo?.id;
 
-return () => {
-  if (stompClientRef.current) stompClientRef.current.deactivate();
-};
-}, [codigo, carregarDadosIniciais]);
-
-// ============================================================
-// AÇÕES
-// ============================================================
-const handleDesmanchar = async () => {
-  setActionLoading(true);
-  try {
-    const eu = await usuarioService.getMeuPerfil();
-    const token = await usuarioService.getToken();
-    const idSala = salaInfo?.idSala || salaInfo?.id;
-
-    if (isDonoDaSala) {
-      await salaService.fecharSala(idSala, token);
-    } else {
-      await salaService.sairDaSala(codigo, eu.id, token);
+      if (isDonoDaSala) {
+        await salaService.fecharSala(idSala, token);
+      } else {
+        await salaService.sairDaSala(codigo, eu.id, token);
+      }
+      router.replace('/game');
+    } catch (err) {
+      router.replace('/game');
+    } finally {
+      setActionLoading(false);
     }
-    router.replace('/game');
-  } catch (err) {
-    router.replace('/game');
-  } finally {
-    setActionLoading(false);
-  }
-};
+  };
 
-const handleIniciar = async () => {
-  if (!isDonoDaSala) return;
+  const handleIniciar = async () => {
+    if (!isDonoDaSala) return;
 
-  if (usuarios.length < 1) { 
-    return Alert.alert("Aguarde", "Espere mais jogadores.");
-  }
+    if (usuarios.length < 1) {
+      return Alert.alert("Aguarde", "Espere mais jogadores.");
+    }
 
-  setActionLoading(true);
-  try {
-    const eu = await usuarioService.getMeuPerfil();
-    const token = await usuarioService.getToken();
-    const dest = `/app/sala/${codigo}/iniciar`;
+    setActionLoading(true);
+    try {
+      const eu = await usuarioService.getMeuPerfil();
+      const token = await usuarioService.getToken();
+      const dest = `/app/sala/${codigo}/iniciar`;
 
-    if (stompClientRef.current && stompClientRef.current.connected) {
-      stompClientRef.current.publish({
-        destination: dest,
-        body: JSON.stringify({ idUsuario: eu.id }),
+      if (stompClientRef.current?.connected) {
+        stompClientRef.current.publish({
+          destination: dest,
+          body: JSON.stringify({ idUsuario: eu.id }),
+        });
+      } else {
+        await salaService.iniciarSala(codigo, eu.id, token);
+      }
+
+      router.replace({
+        pathname: '/aguardando',
+        params: { codigoSala: codigo }
       });
-    } else {
-      await salaService.iniciarSala(codigo, eu.id, token);
+    } catch (err) {
+      Alert.alert("Erro", "Falha ao iniciar.");
+      setActionLoading(false);
     }
+  };
 
-    router.replace({
-      pathname: '/aguardando',
-      params: { codigoSala: codigo }
-    });
-  } catch (err) {
-    Alert.alert("Erro", "Falha ao iniciar. Tente novamente.");
-    setActionLoading(false);
-  }
-};
+  const handleExpulsar = async (idUsuario) => {
+    setShowExpelModal(false);
+    if (!isDonoDaSala) return;
 
-const handleExpulsar = async (idUsuario) => {
-  setShowExpelModal(false);
-  if (!isDonoDaSala) return;
+    setActionLoading(true);
+    try {
+      const token = await usuarioService.getToken();
+      await salaService.expulsarUsuario(codigo, idUsuario, token);
 
-  setActionLoading(true);
-  try {
-    const token = await usuarioService.getToken();
-    await salaService.expulsarUsuario(codigo, idUsuario, token);
+      setUsuarios(prev =>
+        prev.filter(u => String(u.id) !== String(idUsuario))
+      );
+    } catch (err) {
+      Alert.alert("Erro", "Falha ao expulsar.");
+    } finally {
+      setActionLoading(false);
+      setUsuarioSelecionado(null);
+    }
+  };
 
-    setUsuarios(prev =>
-      prev.filter(u => String(u.id) !== String(idUsuario))
-    );
-  } catch (err) {
-    Alert.alert("Erro", "Falha ao expulsar.");
-  } finally {
-    setActionLoading(false);
-    setUsuarioSelecionado(null);
-  }
-};
+  // ============================================================
+  // RENDER
+  // ============================================================
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor="#1CB0FC" />
+      <CustomHeader showMenu menuPosition="right" closeButtonSide="left" />
 
-// ============================================================
-// RENDER
-// ============================================================
-return (
-<SafeAreaView style={styles.safeArea}>
-  <StatusBar barStyle="light-content" backgroundColor="#1CB0FC" />
-  <CustomHeader showMenu menuPosition="right" closeButtonSide="left" />
-
-  <View style={styles.container}>
-    <View style={styles.headerRow}>
-      <Text style={styles.codeLabel}>CODE:</Text>
-      <Text style={styles.codeValue}>{codigo}</Text>
-    </View>
-
-    <Text style={styles.roomName}>
-      {salaInfo?.nomeSala || 'Carregando...'}
-    </Text>
-
-    <View style={styles.actions}>
-      <TouchableOpacity 
-        style={styles.btnDanger} 
-        onPress={handleDesmanchar}
-        disabled={actionLoading}
-      >
-        <Text style={styles.btnText}>
-          {isDonoDaSala ? 'DESMANCHAR SALA' : 'SAIR'}
-        </Text>
-      </TouchableOpacity>
-
-      {isDonoDaSala && (
-        <TouchableOpacity
-          style={[styles.btnWarning, { marginLeft: 10 }]}
-          onPress={handleIniciar}
-          disabled={actionLoading || loading}
-        >
-          {actionLoading ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <Text style={styles.btnText}>INICIAR</Text>
-          )}
-        </TouchableOpacity>
-      )}
-    </View>
-
-    {loading && usuarios.length === 0 ? (
-      <ActivityIndicator size="large" color="#FFF" style={{ marginTop: 30 }} />
-    ) : (
-      <ScrollView contentContainerStyle={styles.playersGrid}>
-        {usuarios.length === 0 ? (
-          <Text style={styles.msg}>Aguardando jogadores...</Text>
-        ) : (
-          usuarios.map((p) => {
-            const Avatar = getAvatarComponent(p.avatar);
-            const isMe = String(p.id) === String(currentUser?.id);
-            const canExpel = isDonoDaSala && !isMe;
-
-            return (
-              <TouchableOpacity
-                key={p.id}
-                style={styles.playerCard}
-                onPress={() => {
-                  if (canExpel) {
-                    setUsuarioSelecionado(p);
-                    setShowExpelModal(true);
-                  }
-                }}
-                activeOpacity={canExpel ? 0.7 : 1}
-              >
-                <View style={styles.avatarWrapper}>
-                  <View style={styles.avatarCircle}>
-                    <Avatar width={60} height={60} />
-                  </View>
-                </View>
-
-                <Text style={styles.playerName} numberOfLines={1}>
-                  {p.nome || (isMe ? currentUser?.nome : 'Jogador')}
-                </Text>
-              </TouchableOpacity>
-            );
-          })
-        )}
-      </ScrollView>
-    )}
-
-    <Modal transparent visible={showExpelModal} animationType="fade">
-      <Pressable style={styles.modalOverlay} onPress={() => setShowExpelModal(false)}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Confirmar Expulsão</Text>
-          <Text style={styles.modalMessage}>
-            Remover {usuarioSelecionado?.nome}?
-          </Text>
-
-          <View style={styles.modalActions}>
-            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowExpelModal(false)}>
-              <Text style={styles.modalCancelText}>Cancelar</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.modalConfirm}
-              onPress={() => handleExpulsar(usuarioSelecionado.id)}
-            >
-              <Text style={styles.modalConfirmText}>Sim, remover</Text>
-            </TouchableOpacity>
-          </View>
+      <View style={styles.container}>
+        <View style={styles.headerRow}>
+          <Text style={styles.codeLabel}>CODE:</Text>
+          <Text style={styles.codeValue}>{codigo}</Text>
         </View>
-      </Pressable>
-    </Modal>
 
-    {!!errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
-  </View>
-</SafeAreaView>
-);
+        <Text style={styles.roomName}>
+          {salaInfo?.nomeSala || 'Carregando...'}
+        </Text>
+
+        <View style={styles.actions}>
+          <TouchableOpacity 
+            style={styles.btnDanger} 
+            onPress={handleDesmanchar}
+            disabled={actionLoading}
+          >
+            <Text style={styles.btnText}>
+              {isDonoDaSala ? 'DESMANCHAR SALA' : 'SAIR'}
+            </Text>
+          </TouchableOpacity>
+
+          {isDonoDaSala && (
+            <TouchableOpacity
+              style={[styles.btnWarning, { marginLeft: 10 }]}
+              onPress={handleIniciar}
+              disabled={actionLoading || loading}
+            >
+              {actionLoading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.btnText}>INICIAR</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {loading && usuarios.length === 0 ? (
+          <ActivityIndicator size="large" color="#FFF" style={{ marginTop: 30 }} />
+        ) : (
+          <ScrollView contentContainerStyle={styles.playersGrid}>
+            {usuarios.length === 0 ? (
+              <Text style={styles.msg}>Aguardando jogadores...</Text>
+            ) : (
+              usuarios.map(p => {
+                const Avatar = getAvatarComponent(p.avatar);
+                const isMe = String(p.id) === String(currentUser?.id);
+                const canExpel = isDonoDaSala && !isMe;
+
+                return (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={styles.playerCard}
+                    onPress={() => {
+                      if (canExpel) {
+                        setUsuarioSelecionado(p);
+                        setShowExpelModal(true);
+                      }
+                    }}
+                    activeOpacity={canExpel ? 0.7 : 1}
+                  >
+                    <View style={styles.avatarWrapper}>
+                      <View style={styles.avatarCircle}>
+                        <Avatar width={60} height={60} />
+                      </View>
+                    </View>
+
+                    <Text style={styles.playerName} numberOfLines={1}>
+                      {p.nome || (isMe ? currentUser?.nome : 'Jogador')}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })
+            )}
+          </ScrollView>
+        )}
+
+        <Modal transparent visible={showExpelModal} animationType="fade">
+          <Pressable style={styles.modalOverlay} onPress={() => setShowExpelModal(false)}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Confirmar Expulsão</Text>
+              <Text style={styles.modalMessage}>
+                Remover {usuarioSelecionado?.nome}?
+              </Text>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity style={styles.modalCancel} onPress={() => setShowExpelModal(false)}>
+                  <Text style={styles.modalCancelText}>Cancelar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.modalConfirm}
+                  onPress={() => handleExpulsar(usuarioSelecionado.id)}
+                >
+                  <Text style={styles.modalConfirmText}>Sim, remover</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Pressable>
+        </Modal>
+
+        {!!errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
+      </View>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-safeArea: { flex: 1, backgroundColor: '#1CB0FC' },
-container: { flex: 1, padding: 16, alignItems: 'center' },
-headerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
-codeLabel: { color: '#FFF', fontSize: 20, marginRight: 8, fontWeight: 'bold' },
-codeValue: { color: '#FFF', fontSize: 28, fontWeight: '700' },
-roomName: { color: 'rgba(255,255,255,0.9)', fontSize: 17, marginTop: 5 },
-actions: { flexDirection: 'row', marginTop: 14, marginBottom: 14 },
-btnDanger: { backgroundColor: '#FF0000', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10 },
-btnWarning: { backgroundColor: '#FF9D00', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10 },
-btnText: { color: '#FFF', fontWeight: '700' },
-playersGrid: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', paddingBottom: 80, gap: 12 },
-playerCard: { width: 140, height: 100, backgroundColor: '#FFF', borderRadius: 14, margin: 10, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12, marginTop: 25 },
-avatarWrapper: { position: 'absolute', top: -30, left: 0, right: 0, alignItems: 'center' },
-avatarCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center', elevation: 4 },
-playerName: { marginTop: 12, fontWeight: '600', color: '#333' },
-msg: { marginTop: 30, color: '#FFF' },
-error: { marginTop: 12, color: '#ffdddd' },
-modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-modalContent: { width: 280, backgroundColor: '#FFF', borderRadius: 12, padding: 20, alignItems: 'center' },
-modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
-modalMessage: { fontSize: 16, marginBottom: 20, textAlign: 'center' },
-modalActions: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-modalCancel: { backgroundColor: '#ccc', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
-modalCancelText: { fontWeight: '700', color: '#333' },
-modalConfirm: { backgroundColor: '#FF0000', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
-modalConfirmText: { fontWeight: '700', color: '#FFF' },
+  // ================================
+  // 📌 LAYOUT PRINCIPAL
+  // ================================
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#1CB0FC',
+  },
+
+  container: {
+    flex: 1,
+    padding: 16,
+    alignItems: 'center',
+  },
+
+  // ================================
+  // 📌 CABEÇALHO (código da sala)
+  // ================================
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+
+  codeLabel: {
+    color: '#FFF',
+    fontSize: 20,
+    marginRight: 8,
+    fontWeight: 'bold',
+  },
+
+  codeValue: {
+    color: '#FFF',
+    fontSize: 28,
+    fontWeight: '700',
+  },
+
+  roomName: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 17,
+    marginTop: 5,
+  },
+
+  // ================================
+  // 📌 AÇÕES DO DONO DA SALA
+  // ================================
+  actions: {
+    flexDirection: 'row',
+    marginTop: 14,
+    marginBottom: 14,
+  },
+
+  btnDanger: {
+    backgroundColor: '#FF0000',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+  },
+
+  btnWarning: {
+    backgroundColor: '#FF9D00',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+  },
+
+  btnText: {
+    color: '#FFF',
+    fontWeight: '700',
+  },
+
+  // ================================
+  // 📌 LISTA DE JOGADORES
+  // ================================
+  playersGrid: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingBottom: 80,
+    gap: 12,
+  },
+
+  playerCard: {
+    width: 140,
+    height: 100,
+    backgroundColor: '#FFF',
+    borderRadius: 14,
+    margin: 10,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 12,
+    marginTop: 25,
+  },
+
+  avatarWrapper: {
+    position: 'absolute',
+    top: -20,
+    left: 10,
+    right: 0,
+    alignItems: 'center',
+  },
+
+  playerName: {
+    marginTop: 12,
+    fontWeight: '600',
+    color: '#333',
+  },
+
+  // ================================
+  // 📌 MENSAGENS E ERROS
+  // ================================
+  msg: {
+    marginTop: 30,
+    color: '#FFF',
+  },
+
+  error: {
+    marginTop: 12,
+    color: '#ffdddd',
+  },
+
+  // ================================
+  // 📌 MODAL (sair da sala / encerrar sala)
+  // ================================
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  modalContent: {
+    width: 280,
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+
+  modalMessage: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+
+  modalCancel: {
+    backgroundColor: '#ccc',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+
+  modalCancelText: {
+    fontWeight: '700',
+    color: '#333',
+  },
+
+  modalConfirm: {
+    backgroundColor: '#FF0000',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+
+  modalConfirmText: {
+    fontWeight: '700',
+    color: '#FFF',
+  },
 });
+
