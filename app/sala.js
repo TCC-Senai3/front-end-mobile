@@ -126,7 +126,7 @@ export default function Sala() {
 
   useEffect(() => {
     if (!codigo) {
-      router.replace('/game');
+      router.replace('/partida');
       return;
     }
     carregarDadosIniciais();
@@ -236,7 +236,7 @@ export default function Sala() {
                 // =====================================================
                 else if (payload.type === "SALA_FECHADA") {
                   Alert.alert("Aviso", "A sala foi encerrada.");
-                  router.replace('/game');
+                  router.replace('/jogo');
                 }
 
               } catch (err) {
@@ -250,7 +250,7 @@ export default function Sala() {
                 const payload = JSON.parse(msg.body);
                 if (payload?.type === 'EXPULSO') {
                   Alert.alert("Ops!", "Você foi expulso.");
-                  router.replace('/game');
+                  router.replace('/jogo');
                 }
               } catch (e) {}
             });
@@ -287,9 +287,9 @@ export default function Sala() {
       } else {
         await salaService.sairDaSala(codigo, eu.id, token);
       }
-      router.replace('/game');
+      router.replace('/jogo');
     } catch (err) {
-      router.replace('/game');
+      router.replace('/jogo');
     } finally {
       setActionLoading(false);
     }
@@ -318,7 +318,7 @@ export default function Sala() {
       }
 
       router.replace({
-        pathname: '/aguardando',
+        pathname: '/partida',
         params: { codigoSala: codigo }
       });
     } catch (err) {

@@ -9,43 +9,91 @@ if (typeof global.TextEncoder === 'undefined') {
 }
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  SafeAreaView, 
-  TouchableOpacity, 
-  Dimensions, 
-  Alert, 
-  ActivityIndicator 
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  Dimensions,
+  Alert,
+  ActivityIndicator,
+  Modal
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
 
 import { Client } from '@stomp/stompjs';
 import usuarioService from '../services/usuarioService';
+import salaService from '../services/salaService';
 
 const { width, height } = Dimensions.get('window');
+
+/**
+ * CountdownOverlay - componente interno simples para 3,2,1
+ * recebe: segundos (default 3) e onComplete()
+ */
+function CountdownOverlay({ segundos = 3, onComplete, visible }) {
+  const [count, setCount] = useState(segundos);
+
+  useEffect(() => {
+    if (!visible) {
+      setCount(segundos);
+      return;
+    }
+
+    if (count <= 0) {
+      onComplete && onComplete();
+      return;
+    }
+
+    const t = setTimeout(() => setCount((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [count, visible]);
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent animationType="fade">
+      <View style={localStyles.countdownOverlay}>
+        <Text style={localStyles.countdownText}>Próxima pergunta em...</Text>
+        <Text style={localStyles.countdownNumber}>{count}</Text>
+      </View>
+    </Modal>
+  );
+}
 
 export default function PartidaScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  
+
   // Recebe dados da navegação anterior
   const { codigoSala, idSala, idFormulario } = params;
 
   // --- ESTADOS DO JOGO ---
-  const [perguntaAtual, setPerguntaAtual] = useState(null); // Guarda a pergunta inteira
-  const [selectedAnswer, setSelectedAnswer] = useState(null); // Índice da resposta escolhida
-  const [timeLeft, setTimeLeft] = useState(0); // Tempo restante
-  const [bloqueado, setBloqueado] = useState(false); // Bloqueia cliques após responder
-  const [conectado, setConectado] = useState(false); // Status do socket
-  const [statusJogo, setStatusJogo] = useState('AGUARDANDO'); // AGUARDANDO, RESPONDENDO, FIM
+  const [perguntaAtual, setPerguntaAtual] = useState(null); 
+  const [opcoes, setOpcoes] = useState([]);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [bloqueado, setBloqueado] = useState(false);
+  const [conectado, setConectado] = useState(false);
+  const [statusJogo, setStatusJogo] = useState('AGUARDANDO'); 
 
-  const stompClientRef = useRef(null);
+  // UI states
+  const [showCountdown, setShowCountdown] = useState(false);
+  const [showResultScreen, setShowResultScreen] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const stompRef = useRef(null);
   const timerRef = useRef(null);
+  const mountedRef = useRef(true);
 
-  // Formata segundos para MM:SS
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -53,209 +101,346 @@ export default function PartidaScreen() {
   };
 
   // ============================================================
-  // 1. CONEXÃO WEBSOCKET E LÓGICA DO JOGO
+  // 1) Conectar WebSocket e ouvir eventos da partida
   // ============================================================
   useEffect(() => {
-    const conectarJogo = async () => {
-      try {
-        const token = await usuarioService.getToken();
-        const eu = await usuarioService.getMeuPerfil();
-        
-        if (!token || !codigoSala) {
-            Alert.alert("Erro", "Dados da partida inválidos.");
-            router.replace('/home');
-            return;
-        }
-
-        const wsUrl = 'wss://tccdrakes.azurewebsites.net/ws-native';
-
-        const client = new Client({
-          brokerURL: wsUrl,
-          connectHeaders: { Authorization: `Bearer ${token}` }, // Token JWT
-          reconnectDelay: 5000,
-          forceBinaryWSFrames: true,
-          appendMissingNULLonIncoming: true,
-
-          onConnect: () => {
-            console.log('✅ Conectado ao Jogo na sala:', codigoSala);
-            setConectado(true);
-
-            // A) Escutar Eventos do Jogo (Nova Pergunta, Fim, etc.)
-            client.subscribe(`/topic/sala/${codigoSala}/game`, (msg) => {
-              try {
-                const payload = JSON.parse(msg.body);
-                console.log('🎮 Evento Jogo:', payload.type);
-
-                if (payload.type === 'NOVA_PERGUNTA') {
-                  // Recebeu pergunta: Atualiza tela e reseta timer
-                  setPerguntaAtual(payload.pergunta); 
-                  // Se o back mandar 'tempo' use ele, senão 30s padrão
-                  setTimeLeft(payload.tempo || 30);   
-                  setSelectedAnswer(null);            
-                  setBloqueado(false);
-                  setStatusJogo('RESPONDENDO');                
-                } 
-                else if (payload.type === 'FIM_DE_JOGO') {
-                  setStatusJogo('FIM');
-                  Alert.alert("Fim de Jogo", "A partida acabou!");
-                  router.replace('/home'); // Futuramente: Tela de Placar
-                }
-                else if (payload.type === 'SALA_FECHADA') {
-                   Alert.alert("Aviso", "A sala foi encerrada.");
-                   router.replace('/home');
-                }
-              } catch(e) { console.error("Erro parsing jogo:", e); }
-            });
-
-            // B) Opcional: Se precisar avisar que carregou
-            // client.publish({ destination: `/app/sala/${codigoSala}/pronto` });
-          },
-          
-          onStompError: (f) => console.log('Erro STOMP Jogo:', f.headers.message),
-          onWebSocketClose: () => console.log('WS Jogo Fechou')
-        });
-
-        client.activate();
-        stompClientRef.current = client;
-
-      } catch (error) {
-        console.error("Erro WS Jogo:", error);
-      }
-    };
-
-    conectarJogo();
-
+    iniciarSocket();
     return () => {
-      if (stompClientRef.current) stompClientRef.current.deactivate();
+      if (stompRef.current) {
+        try { stompRef.current.deactivate(); } catch (e) {}
+      }
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [codigoSala]);
 
-  // ============================================================
-  // 2. LÓGICA DO TIMER
-  // ============================================================
-  useEffect(() => {
-    if (timeLeft > 0 && statusJogo === 'RESPONDENDO') {
-      timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && perguntaAtual && statusJogo === 'RESPONDENDO') {
-      // Tempo acabou!
-      clearInterval(timerRef.current);
-      if (!bloqueado) {
-         setBloqueado(true); // Bloqueia interações
-         // Aqui você pode forçar o envio de resposta vazia se o backend exigir
+  const iniciarSocket = async () => {
+    try {
+      const token = await usuarioService.getToken();
+      if (!token || !codigoSala) {
+        Alert.alert('Erro', 'Dados da partida inválidos.');
+        router.replace('/home');
+        return;
       }
+
+      const wsUrl = 'wss://tccdrakes.azurewebsites.net/ws-native';
+      const client = new Client({
+        brokerURL: wsUrl,
+        connectHeaders: { Authorization: `Bearer ${token}` },
+        reconnectDelay: 3000,
+        forceBinaryWSFrames: true,
+        appendMissingNULLonIncoming: true,
+        onConnect: () => {
+          console.log('WS PARTIDA conectado');
+          setConectado(true);
+
+          client.subscribe(`/topic/partida/${codigoSala}`, (msg) => {
+            try {
+              const payload = JSON.parse(msg.body);
+              console.log('EVENTO PARTIDA (WS):', payload);
+
+              if (payload.type === 'NOVA_PERGUNTA') {
+                receberNovaPerguntaDoServidor(payload.pergunta);
+              }
+
+              if (payload.type === 'RESULTADO_RESPOSTA') {
+                console.log('Resultado da resposta (broadcast):', payload.resultado);
+              }
+
+              if (payload.type === 'JOGO_FINALIZADO') {
+                setStatusJogo('FIM');
+                Alert.alert('Fim de Jogo', 'A partida acabou.');
+                router.replace('/home');
+              }
+
+              if (payload.type === 'SALA_FECHADA') {
+                Alert.alert('Aviso', 'A sala foi encerrada.');
+                router.replace('/home');
+              }
+
+            } catch (e) {
+              console.error('Erro parse mensagem partida WS', e);
+            }
+          });
+        },
+      });
+
+      client.activate();
+      stompRef.current = client;
+      setLoading(false);
+
+    } catch (e) {
+      console.error('Erro iniciarSocket:', e);
+      setLoading(false);
     }
-    return () => clearInterval(timerRef.current);
-  }, [timeLeft, perguntaAtual, statusJogo]);
+  };
+
+  const pendingPerguntaRef = useRef(null);
+
+  const receberNovaPerguntaDoServidor = (pergunta) => {
+    setShowResultScreen(false);
+    setIsCorrect(false);
+    setSelectedAnswer(null);
+    setBloqueado(false);
+
+    setShowCountdown(true);
+    pendingPerguntaRef.current = pergunta;
+  };
+  const aplicarPerguntaPendente = () => {
+    const p = pendingPerguntaRef.current;
+    if (!p) return;
+    pendingPerguntaRef.current = null;
+
+    const options =
+      p.alternativas ||
+      p.options ||
+      p.opcoes ||
+      p.alternativasPergunta ||
+      [];
+
+    const tempo = p.tempo || p.time || 30;
+
+    setPerguntaAtual(p);
+    setOpcoes(options);
+    setTimeLeft(tempo);
+    setBloqueado(false);
+    setSelectedAnswer(null);
+    setStatusJogo('RESPONDENDO');
+
+    iniciarTimerPergunta();
+  };
 
   // ============================================================
-  // 3. ENVIAR RESPOSTA
+  // 3) Timer da pergunta
   // ============================================================
-  const handleAnswerSelect = async (index) => {
-    if (bloqueado) return; // Evita duplo clique
+  const iniciarTimerPergunta = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
 
-    setSelectedAnswer(index);
-    setBloqueado(true); // Trava para não mudar a resposta
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
 
+          if (!bloqueado) {
+            setBloqueado(true);
+            enviarResposta(null);
+            setIsCorrect(false);
+            setShowResultScreen(true);
+
+            setTimeout(() => {
+              setShowCountdown(true);
+            }, 2000);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // ============================================================
+  // 4) Enviar resposta para backend
+  // ============================================================
+  const enviarResposta = async (idAlternativa) => {
     try {
       const eu = await usuarioService.getMeuPerfil();
-      
-      // Envia resposta via WebSocket
-      if (stompClientRef.current && stompClientRef.current.connected) {
-        const payload = {
-            idUsuario: eu.id,
-            idPergunta: perguntaAtual.id || perguntaAtual.idPergunta, // Ajuste conforme seu DTO
-            indiceResposta: index 
-        };
+      const token = await usuarioService.getToken();
 
-        // Rota de resposta no backend (Verifique se é esta no seu Controller)
-        stompClientRef.current.publish({
-            destination: `/app/sala/${codigoSala}/responder`,
-            body: JSON.stringify(payload)
-        });
-        console.log("Resposta enviada:", index);
+      const payload = {
+        idSala,
+        idUsuario: eu?.id,
+        idPergunta: perguntaAtual?.id || perguntaAtual?.idPergunta,
+        idAlternativaSelecionada: idAlternativa,
+      };
+
+      const res = await salaService.enviarResposta(payload, token);
+
+      if (res && typeof res.correta !== 'undefined') {
+        setIsCorrect(Boolean(res.correta));
+        setShowResultScreen(true);
+        setBloqueado(true);
+
+        if (timerRef.current) clearInterval(timerRef.current);
+
+        if (res.proximaPergunta) {
+          setTimeout(() => {
+            pendingPerguntaRef.current = res.proximaPergunta;
+            setShowResultScreen(false);
+            setShowCountdown(true);
+          }, 1500);
+        } else {
+          setTimeout(() => {
+            Alert.alert('Fim', 'Última pergunta.');
+            router.replace('/home');
+          }, 1500);
+        }
+      } else {
+        setShowResultScreen(true);
+        setIsCorrect(false);
+        setBloqueado(true);
+        if (timerRef.current) clearInterval(timerRef.current);
       }
-    } catch (error) {
-      console.error("Erro ao responder:", error);
-      Alert.alert("Erro", "Falha ao enviar resposta");
-      setBloqueado(false); // Destrava se der erro
+    } catch (err) {
+      console.error('Erro enviarResposta:', err);
+      Alert.alert('Erro', 'Falha ao enviar resposta.');
+      setBloqueado(false);
     }
   };
 
-  const handleExit = () => {
-    Alert.alert("Sair", "Deseja sair da partida?", [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Sim", style: "destructive", onPress: () => router.replace('/home') }
-    ]);
+  // ============================================================
+  // 5) Quando usuário toca em uma opção
+  // ============================================================
+  const handleAnswerSelect = async (indexOrOption) => {
+    if (bloqueado) return;
+
+    let indice = indexOrOption;
+
+    if (typeof indexOrOption === 'object' && indexOrOption !== null) {
+      indice =
+        indexOrOption.idAlternativa ??
+        indexOrOption.id ??
+        indexOrOption.index ??
+        null;
+    }
+
+    setSelectedAnswer(indice);
+    setBloqueado(true);
+
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    await enviarResposta(indice);
   };
 
   // ============================================================
-  // RENDERIZAÇÃO
+  // 6) Ao terminar o countdown (3,2,1)
   // ============================================================
-  
-  // TELA DE CARREGAMENTO (Enquanto não chega a pergunta)
-  if (!perguntaAtual) {
-      return (
-        <SafeAreaView style={[styles.safeArea, {justifyContent: 'center', alignItems:'center'}]}>
-            <ActivityIndicator size="large" color="#FFF" />
-            <Text style={{color: '#FFF', marginTop: 20, fontFamily: 'Poppins-Bold', fontSize: 18}}>
-                {conectado ? "Aguardando o início..." : "Conectando ao jogo..."}
-            </Text>
-            {/* Botão de emergência para sair se travar */}
-            <TouchableOpacity onPress={handleExit} style={{marginTop: 40, padding: 10}}>
-                <Text style={{color: '#FF0000', fontFamily: 'Poppins-Bold'}}>Sair</Text>
-            </TouchableOpacity>
-        </SafeAreaView>
-      );
+  const onCountdownComplete = () => {
+    setShowCountdown(false);
+    aplicarPerguntaPendente();
+  };
+
+  // ============================================================
+  // RENDER
+  // ============================================================
+  if (loading || (!conectado && !perguntaAtual)) {
+    return (
+      <SafeAreaView
+        style={[
+          styles.safe,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
+        <ActivityIndicator size="large" color="#FFF" />
+        <Text style={{ color: '#FFF', marginTop: 20 }}>
+          {conectado ? 'Aguardando pergunta...' : 'Conectando ao jogo...'}
+        </Text>
+
+        <TouchableOpacity
+          onPress={() => router.replace('/home')}
+          style={{ marginTop: 30 }}
+        >
+          <Text style={{ color: '#FF0000' }}>Sair</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safe}>
       <CustomHeader showMenu={true} menuPosition="right" />
-      
-      {/* Header Controls (Tempo e Sair) */}
+
+      <CountdownOverlay
+        segundos={3}
+        visible={showCountdown}
+        onComplete={onCountdownComplete}
+      />
+
+      <Modal visible={showResultScreen} transparent animationType="fade">
+        <View style={localStyles.resultOverlay}>
+          <View style={localStyles.resultCard}>
+            <Text style={localStyles.resultText}>
+              {isCorrect ? 'Correto ✓' : 'Errado ✕'}
+            </Text>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.headerControls}>
         <View style={styles.timerButton}>
           <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
         </View>
-        <TouchableOpacity style={styles.exitButton} onPress={handleExit}>
+
+        <TouchableOpacity
+          style={styles.exitButton}
+          onPress={() => {
+            Alert.alert('Sair', 'Deseja sair da partida?', [
+              { text: 'Cancelar', style: 'cancel' },
+              {
+                text: 'Sim',
+                style: 'destructive',
+                onPress: () => router.replace('/home'),
+              },
+            ]);
+          }}
+        >
           <Text style={styles.exitText}>SAIR</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Card Principal */}
       <View style={styles.cardContainer}>
         <View style={styles.card}>
-          {/* Categoria */}
           <Text style={styles.categoryTitle}>
-            {perguntaAtual.categoria || 'PERGUNTA'}
+            {perguntaAtual?.categoria ||
+              perguntaAtual?.tema ||
+              'PERGUNTA'}
           </Text>
-          
-          {/* Enunciado */}
+
           <Text style={styles.questionText}>
-            {perguntaAtual.enunciado || perguntaAtual.question || "Carregando pergunta..."}
+            {perguntaAtual?.enunciado ||
+              perguntaAtual?.question ||
+              perguntaAtual?.textoPergunta ||
+              '...'}
           </Text>
-          
-          {/* Opções */}
+
           <View style={styles.optionsContainer}>
-            {/* Verifica se 'opcoes' existe e é array */}
-            {perguntaAtual.options && perguntaAtual.options.map((option, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.optionButton,
-                  selectedAnswer === index && styles.optionButtonSelected,
-                  // Estilo visual se estiver bloqueado (respondido)
-                  bloqueado && selectedAnswer !== index && { opacity: 0.5 }
-                ]}
-                onPress={() => handleAnswerSelect(index)}
-                disabled={bloqueado} // Desabilita clique se já respondeu ou tempo acabou
-              >
-                <Text style={styles.optionText}>{option}</Text>
-              </TouchableOpacity>
-            ))}
+            {opcoes && opcoes.length > 0 ? (
+              opcoes.map((opt, idx) => {
+                const label =
+                  typeof opt === 'string'
+                    ? opt
+                    : opt.textoAlternativa ||
+                      opt.text ||
+                      opt.label ||
+                      JSON.stringify(opt);
+
+                const optId =
+                  typeof opt === 'string'
+                    ? idx
+                    : opt.idAlternativa ?? opt.id ?? idx;
+
+                const selected =
+                  String(selectedAnswer) === String(optId);
+
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[
+                      styles.optionButton,
+                      selected && styles.optionButtonSelected,
+                      bloqueado &&
+                        !selected && { opacity: 0.6 },
+                    ]}
+                    onPress={() => handleAnswerSelect(optId)}
+                    disabled={bloqueado}
+                  >
+                    <Text style={styles.optionText}>{label}</Text>
+                  </TouchableOpacity>
+                );
+              })
+            ) : (
+              <Text style={{ textAlign: 'center' }}>
+                Nenhuma opção disponível
+              </Text>
+            )}
           </View>
         </View>
       </View>
@@ -263,6 +448,10 @@ export default function PartidaScreen() {
   );
 }
 
+
+/* ============================
+   STYLES (mantive sua paleta)
+   ============================ */
 const PRIMARY_BLUE = '#1CB0FC';
 const DARK_BLUE = '#01324B';
 const RED = '#FF0000';
@@ -271,7 +460,7 @@ const TEXT_DARK = '#3B3939';
 const OPTION_BLUE = '#00B7FF';
 
 const styles = StyleSheet.create({
-  safeArea: {
+  safe: {
     flex: 1,
     backgroundColor: PRIMARY_BLUE,
   },
@@ -334,7 +523,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
     letterSpacing: 1,
-    textTransform: 'uppercase'
+    textTransform: 'uppercase',
   },
   questionText: {
     fontSize: 16,
@@ -342,7 +531,7 @@ const styles = StyleSheet.create({
     color: TEXT_DARK,
     lineHeight: 24,
     marginBottom: 24,
-    textAlign: 'center'
+    textAlign: 'center',
   },
   optionsContainer: {
     gap: 12,
@@ -363,5 +552,46 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
     lineHeight: 20,
+  },
+});
+
+/* ============================
+   Overlays e Modais
+   ============================ */
+const localStyles = StyleSheet.create({
+  countdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  countdownText: {
+    color: '#fff',
+    fontSize: 20,
+    marginBottom: 14,
+    fontFamily: 'Poppins-Regular',
+  },
+  countdownNumber: {
+    color: '#FFD700',
+    fontSize: 96,
+    fontWeight: '900',
+  },
+  resultOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  resultCard: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 12,
+    width: 260,
+    alignItems: 'center',
+  },
+  resultText: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#333',
   },
 });
