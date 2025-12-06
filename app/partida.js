@@ -1,5 +1,6 @@
 // app/partida.js
 
+// 1. POLYFILL OBRIGATÓRIO
 import * as TextEncoding from 'text-encoding';
 
 if (typeof global.TextEncoder === 'undefined') {
@@ -7,278 +8,274 @@ if (typeof global.TextEncoder === 'undefined') {
   global.TextDecoder = TextEncoding.TextDecoder;
 }
 
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Dimensions, Alert, ActivityIndicator } from 'react-native';
-import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  SafeAreaView, 
+  TouchableOpacity, 
+  Dimensions, 
+  Alert, 
+  ActivityIndicator 
+} from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+
+// Componentes Gerais
 import CustomHeader from '../components/CustomHeader';
 
-// Ícones
-import { CancelIcon } from '../components/icons/icon'; 
-import VerifiedIcon from '../components/icons/VerifiedIcon';
+// --- COMPONENTES DO JOGO (Importe dos arquivos que você criou) ---
+import CountdownOverlay from '../components/CountdownOverlay';
+import WaitingOverlay from '../components/WaitingOverlay';
+import Verified from '../app/verified.js'; // Nome do arquivo enviado foi 'verified.js'
+import ErrorScreen from '../app/error.js'; // Nome do arquivo enviado foi 'error.js'
 
+// Serviços e Socket
 import { Client } from '@stomp/stompjs';
 import usuarioService from '../services/usuarioService';
 import { getFormularioById } from '../services/formulariosService'; 
-import salaService from '../services/salaService';
+// Se você não tiver o partidaService com enviarResposta, pode comentar a chamada por enquanto
+import { enviarResposta } from '../services/formulariosService.js'; 
 
 const { width, height } = Dimensions.get('window');
-
-// --- COMPONENTES DE FEEDBACK (CORRETO / ERRADO) ---
-
-const CorrectScreen = () => (
-  <SafeAreaView style={styles.feedbackContainer}>
-    <CustomHeader title="" showMenu={true} menuPosition="right" />
-    <View style={styles.content}>
-      <View style={styles.verifiedImageWrapper}>
-        <VerifiedIcon width={225} height={225} />
-      </View>
-      <Text style={styles.correctText}>CORRETO!</Text>
-    </View>
-  </SafeAreaView>
-);
-
-const ErrorScreen = () => (
-  <SafeAreaView style={styles.feedbackContainer}>
-    <CustomHeader title="" showMenu={true} menuPosition="right" />
-    <View style={styles.content}>
-      <CancelIcon style={styles.cancelImage} width={200} height={200} />
-      <Text style={styles.errorText}>ERRADO!</Text>
-    </View>
-  </SafeAreaView>
-);
-
-// --- TELA PRINCIPAL DA PARTIDA ---
 
 export default function PartidaScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  
   const { codigoSala, idSala } = params;
   let initialIdFormulario = params.idFormulario;
 
-  // Estados do Jogo
-  const [perguntas, setPerguntas] = useState([]); 
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); 
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(20); 
-  const [bloqueado, setBloqueado] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [statusText, setStatusText] = useState("Preparando o jogo...");
+  // --- ESTADOS DE DADOS ---
+  const [perguntas, setPerguntas] = useState([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const perguntaAtual = perguntas[currentQuestionIndex];
+
+  // --- ESTADOS DO FLUXO DO JOGO ---
+  // 'LOADING' | 'COUNTDOWN' | 'PLAYING' | 'RESULT'
+  const [gameState, setGameState] = useState('LOADING'); 
   
-  // Estados de Controle Visual
-  const [showCountdown, setShowCountdown] = useState(true);
-  const [countdown, setCountdown] = useState(3);
-  const [showResult, setShowResult] = useState(null); // 'correct' | 'error' | null
+  const [timeLeft, setTimeLeft] = useState(20); 
+  const [selectedAnswer, setSelectedAnswer] = useState(null); // ID da alternativa selecionada
+  const [isCorrect, setIsCorrect] = useState(false);
+  
+  // Pontuação (opcional, para controle local)
+  const [acertos, setAcertos] = useState(0);
 
   const stompClientRef = useRef(null);
   const timerRef = useRef(null);
 
-  const perguntaAtual = perguntas[currentQuestionIndex];
-
+  // Formatação de tempo
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // 1. INICIALIZAÇÃO
+  // ============================================================
+  // 1. CARGA INICIAL
+  // ============================================================
   useEffect(() => {
     const inicializar = async () => {
       try {
         const token = await usuarioService.getToken();
-        if (!token) throw new Error("Usuário não autenticado.");
+        if (!token) throw new Error("Sem token");
 
-        let finalIdFormulario = initialIdFormulario;
-
-        // Recupera ID do formulário se necessário
-        if (!finalIdFormulario) {
-            setStatusText("Sincronizando dados...");
-            const dadosSala = await salaService.getSalaByPin(codigoSala, token);
-            if (dadosSala && dadosSala.idFormulario) {
-                finalIdFormulario = dadosSala.idFormulario;
-            } else if (dadosSala && dadosSala.formulario && dadosSala.formulario.idFormulario) {
-                 finalIdFormulario = dadosSala.formulario.idFormulario;
-            } else {
-                throw new Error("Não foi possível identificar o formulário.");
-            }
-        }
-
-        // Busca Perguntas
-        setStatusText("Carregando perguntas...");
-        const formularioData = await getFormularioById(finalIdFormulario, token); 
-        
-        if (formularioData && formularioData.perguntas && formularioData.perguntas.length > 0) {
-            setPerguntas(formularioData.perguntas);
+        // Busca o Quiz
+        const dados = await getFormularioById(initialIdFormulario, token);
+        if (dados && dados.perguntas && dados.perguntas.length > 0) {
+            setPerguntas(dados.perguntas);
+            // Tudo pronto, inicia a contagem para a 1ª pergunta
+            setGameState('COUNTDOWN');
         } else {
-            throw new Error("O formulário não possui perguntas.");
+            Alert.alert("Erro", "Quiz vazio.");
+            router.replace('/home');
         }
 
-        setLoading(false);
-
-        // Conecta WS
+        // Conecta WS (para ouvir fim de jogo forçado)
         const wsUrl = 'wss://tccdrakes.azurewebsites.net/ws-native';
         const client = new Client({
           brokerURL: wsUrl,
           connectHeaders: { Authorization: `Bearer ${token}` },
           reconnectDelay: 5000,
-          heartbeatIncoming: 4000,
-          heartbeatOutgoing: 4000,
           forceBinaryWSFrames: true,
           appendMissingNULLonIncoming: true,
           onConnect: () => {
-            client.subscribe(`/topic/sala/${codigoSala}/game`, (msg) => {
-                try {
-                    const payload = JSON.parse(msg.body);
-                    if (payload.type === 'FIM_DE_JOGO') {
-                        router.replace('/home');
-                    }
-                } catch(e) {}
-            });
+             client.subscribe(`/topic/sala/${codigoSala}/game`, (msg) => {
+                 try {
+                     const pl = JSON.parse(msg.body);
+                     if (pl.type === 'FIM_DE_JOGO' || pl.type === 'SALA_FECHADA') {
+                         router.replace('/home');
+                     }
+                 } catch(e){}
+             });
           }
         });
-
         client.activate();
         stompClientRef.current = client;
 
       } catch (error) {
-        Alert.alert("Erro", error.message || "Falha ao carregar o jogo.", [
-            { text: "Voltar", onPress: () => router.replace('/home') }
-        ]);
+        console.log(error);
+        Alert.alert("Erro", "Falha ao carregar partida.");
+        router.replace('/home');
       }
     };
-
     inicializar();
 
     return () => {
-      if (stompClientRef.current) stompClientRef.current.deactivate();
-      if (timerRef.current) clearInterval(timerRef.current);
+        if (stompClientRef.current) stompClientRef.current.deactivate();
+        if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
-  // 2. CONTAGEM REGRESSIVA (3, 2, 1)
-  useEffect(() => {
-      if (loading || showResult) return; // Pausa se estiver carregando ou mostrando resultado
+  // ============================================================
+  // 2. CONFIGURAR PERGUNTA (Quando sai do Countdown)
+  // ============================================================
+  const iniciarPergunta = () => {
+      // Define tempo da pergunta (padrão 20s ou o que vier do back)
+      const tempo = perguntaAtual?.tempo || 20; 
+      setTimeLeft(tempo);
+      setGameState('PLAYING');
+  };
 
-      if (showCountdown && countdown > 0) {
-          const timer = setTimeout(() => setCountdown(prev => prev - 1), 1000);
-          return () => clearTimeout(timer);
-      } else if (showCountdown && countdown === 0) {
-          setShowCountdown(false);
-          // Inicia pergunta
-          const tempoPergunta = perguntaAtual?.tempo || 20; 
-          setTimeLeft(tempoPergunta);
-          setBloqueado(false);
-      }
-  }, [showCountdown, countdown, loading, showResult]);
-
-  // 3. TIMER DA PERGUNTA
+  // ============================================================
+  // 3. TIMER (Roda durante 'PLAYING')
+  // ============================================================
   useEffect(() => {
-    if (!showCountdown && !loading && !showResult && timeLeft > 0) {
-      timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && !showCountdown && !loading && !showResult && !bloqueado) {
-      clearInterval(timerRef.current);
-      handleTimeUp(); // Tempo acabou sem resposta
+    // O timer deve rodar se estamos jogando (mesmo se o usuário já respondeu e está vendo o overlay)
+    if (gameState === 'PLAYING' && timeLeft > 0) {
+        timerRef.current = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timerRef.current);
+                    finalizarRodada(); // Tempo acabou
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
     }
     return () => clearInterval(timerRef.current);
-  }, [timeLeft, showCountdown, loading, showResult, bloqueado]);
+  }, [gameState, timeLeft]);
 
-  // Tempo acabou -> Conta como erro e avança
-  const handleTimeUp = () => {
-      setBloqueado(true);
-      setShowResult('error'); // Mostra tela de erro
-      setTimeout(nextQuestion, 2000); // Espera 2s e vai
-  };
-
-  // 4. LÓGICA DE RESPOSTA
+  // ============================================================
+  // 4. LÓGICA DE RESPOSTA (Usuário clicou)
+  // ============================================================
   const handleAnswerSelect = async (alternativa) => {
-    if (bloqueado) return;
+      // Se já respondeu ou o tempo acabou, ignora
+      if (selectedAnswer !== null || gameState !== 'PLAYING' || timeLeft <= 0) return;
 
-    setSelectedAnswer(alternativa.idAlternativa);
-    setBloqueado(true);
+      setSelectedAnswer(alternativa.idAlternativa);
 
-    // Verifica se acertou (supondo que o objeto alternativa tenha o campo 'correta')
-    const acertou = alternativa.correta === true;
-    
-    // Mostra tela de feedback imediatamente
-    setShowResult(acertou ? 'correct' : 'error');
+      // Envia resposta ao backend (Sem esperar, para não travar UI)
+      try {
+          const eu = await usuarioService.getMeuPerfil();
+          const token = await usuarioService.getToken();
+          
+          const payload = {
+              idUsuario: eu.id,
+              idPergunta: perguntaAtual.idPergunta || perguntaAtual.id,
+              idAlternativaSelecionada: alternativa.idAlternativa,
+              tempoGasto: (perguntaAtual?.tempo || 20) - timeLeft, // Tempo que levou
+              idSala: idSala
+          };
+          
+          // Função importada do seu service (opcional se não tiver implementado ainda)
+          if (enviarResposta) {
+             enviarResposta(payload, token).catch(err => console.log("Erro envio resposta:", err));
+          }
+      } catch (e) { console.log(e); }
 
-    // Envio ao backend (Opcional por enquanto)
-    /*
-    try {
-        const eu = await usuarioService.getMeuPerfil();
-        const payload = { ... };
-        // enviarResposta(payload, token);
-    } catch(e) {}
-    */
-
-    // Aguarda 2 segundos vendo o resultado e avança
-    setTimeout(nextQuestion, 2000);
+      // Nota: Não mudamos o gameState aqui. O usuário vê o WaitingOverlay, 
+      // mas o timer (useEffect acima) continua rodando até zerar.
   };
 
-  // 5. PRÓXIMA PERGUNTA
-  const nextQuestion = () => {
-      setShowResult(null); // Remove tela de feedback
+  // ============================================================
+  // 5. FINALIZAR RODADA (Tempo Esgotou)
+  // ============================================================
+  const finalizarRodada = () => {
+      // Verifica se acertou
+      let acertou = false;
+      
+      // Se o usuário não respondeu, conta como erro
+      if (selectedAnswer !== null) {
+          const altEscolhida = perguntaAtual.alternativas.find(a => a.idAlternativa === selectedAnswer);
+          if (altEscolhida && altEscolhida.correta) {
+              acertou = true;
+              setAcertos(prev => prev + 1);
+          }
+      }
 
+      setIsCorrect(acertou);
+      setGameState('RESULT'); // Mostra tela de Verified ou Error
+
+      // Aguarda 3 segundos vendo o resultado e vai para próxima
+      setTimeout(prepararProxima, 3000);
+  };
+
+  // ============================================================
+  // 6. PREPARAR PRÓXIMA (Ou Fim)
+  // ============================================================
+  const prepararProxima = () => {
       if (currentQuestionIndex < perguntas.length - 1) {
           setCurrentQuestionIndex(prev => prev + 1);
-          setSelectedAnswer(null);
-          setCountdown(3); 
-          setShowCountdown(true); // Reinicia contagem 3,2,1
+          setSelectedAnswer(null); // Limpa resposta
+          setGameState('COUNTDOWN'); // Inicia contagem 3,2,1
       } else {
-          Alert.alert("Fim", "Você completou todas as perguntas!", [
+          // Fim do Jogo
+          Alert.alert("Fim de Jogo", `Você acertou ${acertos} de ${perguntas.length}!`, [
               { text: "Sair", onPress: () => router.replace('/home') }
           ]);
       }
   };
 
   const handleExit = () => {
-    Alert.alert("Sair", "Deseja sair da partida?", [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Sim", style: "destructive", onPress: () => router.replace('/home') }
-    ]);
+      Alert.alert("Sair", "Deseja sair da partida?", [
+          { text: "Não" },
+          { text: "Sim", onPress: () => router.replace('/home') }
+      ]);
   };
 
-  // --- RENDERIZAÇÃO ---
+  // ============================================================
+  // RENDERIZAÇÃO
+  // ============================================================
 
-  // 1. Tela de Carregamento Inicial
-  if (loading) {
+  // 1. Loading Inicial
+  if (gameState === 'LOADING') {
       return (
-        <SafeAreaView style={[styles.safeArea, {justifyContent:'center', alignItems:'center'}]}>
+        <SafeAreaView style={[styles.safeArea, { justifyContent:'center', alignItems:'center'}]}>
             <ActivityIndicator size="large" color="#FFF" />
-            <Text style={{color:'#FFF', marginTop:15, fontFamily: 'Poppins-Bold'}}>
-                {statusText}
-            </Text>
+            <Text style={{color:'#FFF', marginTop:10, fontFamily:'Poppins-Bold'}}>Carregando Quiz...</Text>
         </SafeAreaView>
       );
   }
 
-  // 2. Tela de Resultado (Correto / Errado)
-  if (showResult === 'correct') return <CorrectScreen />;
-  if (showResult === 'error') return <ErrorScreen />;
+  // 2. Tela de Resultado (Importada)
+  // O componente ocupa a tela toda, então retornamos ele direto
+  if (gameState === 'RESULT') {
+      return isCorrect ? <Verified /> : <ErrorScreen />;
+  }
 
-  // 3. Tela de Contagem Regressiva (3, 2, 1)
-  if (showCountdown) {
+  // 3. Contagem Regressiva (3, 2, 1)
+  // Usa o seu componente CountdownOverlay
+  if (gameState === 'COUNTDOWN') {
       return (
-          <SafeAreaView style={[styles.safeArea, {justifyContent:'center', alignItems:'center'}]}>
-              <CustomHeader showMenu={false} />
-              <View style={styles.countdownContainer}>
-                 <Text style={styles.countdownText}>
-                    {countdown > 0 ? countdown : "JÁ!"}
-                 </Text>
-              </View>
-          </SafeAreaView>
+        <SafeAreaView style={styles.safeArea}>
+             <CountdownOverlay 
+                segundos={3} 
+                onComplete={iniciarPergunta} 
+             />
+        </SafeAreaView>
       );
   }
 
   if (!perguntaAtual) return null;
 
-  // 4. Tela da Pergunta (Jogo)
+  // 4. Tela do Jogo (Pergunta)
   return (
     <SafeAreaView style={styles.safeArea}>
       <CustomHeader showMenu={true} menuPosition="right" />
       
+      {/* Timer e Botão Sair */}
       <View style={styles.headerControls}>
         <View style={styles.timerButton}>
           <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
@@ -288,35 +285,50 @@ export default function PartidaScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Card da Pergunta */}
       <View style={styles.cardContainer}>
         <View style={styles.card}>
+          
+          {/* OVERLAY DE ESPERA: Aparece se já respondeu, mas ainda estamos em 'PLAYING' (tempo não acabou) */}
+          {selectedAnswer !== null && gameState === 'PLAYING' && (
+             <WaitingOverlay />
+          )}
+
+          {/* Contador de Questão */}
           <Text style={styles.counterText}>
               Questão {currentQuestionIndex + 1} / {perguntas.length}
           </Text>
 
+          {/* Título/Tema */}
           <Text style={styles.categoryTitle}>
             {perguntaAtual.tema ? perguntaAtual.tema.nomeTema : 'QUIZ'}
           </Text>
           
+          {/* Texto da Pergunta */}
           <Text style={styles.questionText}>
             {perguntaAtual.textoPergunta}
           </Text>
           
+          {/* Alternativas */}
           <View style={styles.optionsContainer}>
-            {perguntaAtual.alternativas && perguntaAtual.alternativas.map((alt) => (
-              <TouchableOpacity
-                key={alt.idAlternativa}
-                style={[
-                  styles.optionButton,
-                  // Mantém a cor azul padrão até clicar
-                  selectedAnswer === alt.idAlternativa && styles.optionButtonSelected,
-                ]}
-                onPress={() => handleAnswerSelect(alt)}
-                disabled={bloqueado}
-              >
-                <Text style={styles.optionText}>{alt.textoAlternativa}</Text>
-              </TouchableOpacity>
-            ))}
+            {perguntaAtual.alternativas && perguntaAtual.alternativas.map((alt) => {
+              const isSelected = selectedAnswer === alt.idAlternativa;
+              
+              return (
+                <TouchableOpacity
+                  key={alt.idAlternativa}
+                  style={[
+                    styles.optionButton,
+                    isSelected && styles.optionButtonSelected
+                  ]}
+                  // Só clica se ainda não escolheu nenhuma
+                  onPress={() => !selectedAnswer && handleAnswerSelect(alt)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.optionText}>{alt.textoAlternativa}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </View>
@@ -324,7 +336,9 @@ export default function PartidaScreen() {
   );
 }
 
-// --- ESTILOS ---
+// ============================================================
+// ESTILOS
+// ============================================================
 const PRIMARY_BLUE = '#1CB0FC';
 const DARK_BLUE = '#01324B';
 const RED = '#FF0000';
@@ -335,79 +349,12 @@ const OPTION_BLUE = '#00B7FF';
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: PRIMARY_BLUE },
   
-  // Estilos da Contagem
-  countdownContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  countdownText: {
-    fontSize: 120,
-    color: '#FFFFFF',
-    fontFamily: 'Blinker-Bold',
-    fontWeight: '900',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 4, height: 4 },
-    textShadowRadius: 10,
-  },
-
-  // Estilos Feedback (Correto/Errado)
-  feedbackContainer: {
-    flex: 1,
-    backgroundColor: '#1CB0FC',
-    justifyContent: 'flex-start',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  verifiedImageWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 225,
-    height: 225,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 10 },
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  cancelImage: {
-    width: 200,
-    height: 200,
-    marginTop: -65,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 10 },
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  correctText: {
-    marginTop: 16,
-    color: '#FFFFFF',
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: 30,
-    textAlign: 'center',
-    letterSpacing: 0.32,
-    textTransform: 'uppercase',
-  },
-  errorText: {
-    color: '#FFFFFF',
-    fontSize: 36,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.32,
-    fontFamily: 'Poppins-Bold',
-  },
-
-  // Estilos do Jogo Normal
+  // Header Controls
   headerControls: {
     position: 'absolute',
     top: height * 0.12,
     right: 20,
-    zIndex: 10,
+    zIndex: 5, // Menor que o overlay
     alignItems: 'flex-end',
   },
   timerButton: {
@@ -425,6 +372,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   exitText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-Bold' },
+  
+  // Card
   cardContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -443,7 +392,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 12,
+    // Importante para o WaitingOverlay ficar preso dentro do card
+    overflow: 'hidden', 
+    position: 'relative' 
   },
+  
+  // Textos
   counterText: {
       textAlign: 'center',
       color: '#888',
@@ -467,6 +421,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center'
   },
+  
+  // Opções
   optionsContainer: { gap: 12 },
   optionButton: {
     backgroundColor: OPTION_BLUE,
@@ -475,7 +431,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   optionButtonSelected: {
-    backgroundColor: '#1D4ED8',
+    backgroundColor: '#1D4ED8', // Azul mais escuro para indicar seleção
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
