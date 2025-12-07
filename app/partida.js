@@ -17,25 +17,26 @@ import {
   TouchableOpacity, 
   Dimensions, 
   Alert, 
-  ActivityIndicator 
+  ActivityIndicator,
+  StatusBar // ✅ CORREÇÃO: ADICIONADO AQUI
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 // Componentes Gerais
 import CustomHeader from '../components/CustomHeader';
 
-// --- COMPONENTES DO JOGO (Importe dos arquivos que você criou) ---
+// --- COMPONENTES DO JOGO ---
 import CountdownOverlay from '../components/CountdownOverlay';
 import WaitingOverlay from '../components/WaitingOverlay';
-import Verified from '../app/verified.js'; // Nome do arquivo enviado foi 'verified.js'
-import ErrorScreen from '../app/error.js'; // Nome do arquivo enviado foi 'error.js'
+import Verified from '../app/verified.js'; 
+import ErrorScreen from '../app/error.js'; 
 
 // Serviços e Socket
 import { Client } from '@stomp/stompjs';
 import usuarioService from '../services/usuarioService';
 import { getFormularioById } from '../services/formulariosService'; 
-// Se você não tiver o partidaService com enviarResposta, pode comentar a chamada por enquanto
 import { enviarResposta } from '../services/formulariosService.js'; 
+import salaService from '../services/salaService'; 
 
 const { width, height } = Dimensions.get('window');
 
@@ -51,20 +52,17 @@ export default function PartidaScreen() {
   const perguntaAtual = perguntas[currentQuestionIndex];
 
   // --- ESTADOS DO FLUXO DO JOGO ---
-  // 'LOADING' | 'COUNTDOWN' | 'PLAYING' | 'RESULT'
   const [gameState, setGameState] = useState('LOADING'); 
+  const [statusText, setStatusText] = useState("Carregando Quiz...");
   
   const [timeLeft, setTimeLeft] = useState(20); 
-  const [selectedAnswer, setSelectedAnswer] = useState(null); // ID da alternativa selecionada
+  const [selectedAnswer, setSelectedAnswer] = useState(null); 
   const [isCorrect, setIsCorrect] = useState(false);
-  
-  // Pontuação (opcional, para controle local)
   const [acertos, setAcertos] = useState(0);
 
   const stompClientRef = useRef(null);
   const timerRef = useRef(null);
 
-  // Formatação de tempo
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -72,26 +70,54 @@ export default function PartidaScreen() {
   };
 
   // ============================================================
-  // 1. CARGA INICIAL
+  // 1. CARGA INICIAL (COM RECUPERAÇÃO DE FALHA)
   // ============================================================
   useEffect(() => {
     const inicializar = async () => {
       try {
         const token = await usuarioService.getToken();
-        if (!token) throw new Error("Sem token");
+        if (!token) throw new Error("Usuário não autenticado.");
 
-        // Busca o Quiz
-        const dados = await getFormularioById(initialIdFormulario, token);
-        if (dados && dados.perguntas && dados.perguntas.length > 0) {
-            setPerguntas(dados.perguntas);
-            // Tudo pronto, inicia a contagem para a 1ª pergunta
-            setGameState('COUNTDOWN');
-        } else {
-            Alert.alert("Erro", "Quiz vazio.");
-            router.replace('/home');
+        let finalIdFormulario = initialIdFormulario;
+
+        // Recuperação de falha: Se não veio ID, busca na sala
+        if (!finalIdFormulario || finalIdFormulario === 'undefined') {
+            console.log("⚠️ ID do formulário perdido. Recuperando dados da sala...");
+            setStatusText("Sincronizando dados...");
+            
+            try {
+                const dadosSala = await salaService.getSalaByPin(codigoSala, token);
+                
+                if (dadosSala?.idFormulario) {
+                    finalIdFormulario = dadosSala.idFormulario;
+                } else if (dadosSala?.formulario?.idFormulario) {
+                    finalIdFormulario = dadosSala.formulario.idFormulario;
+                } else if (dadosSala?.formulario?.id) {
+                    finalIdFormulario = dadosSala.formulario.id;
+                }
+                
+                console.log("✅ ID do Formulário recuperado:", finalIdFormulario);
+            } catch (errSala) {
+                console.error("Erro ao recuperar sala:", errSala);
+                throw new Error("Não foi possível encontrar os dados da partida.");
+            }
         }
 
-        // Conecta WS (para ouvir fim de jogo forçado)
+        if (!finalIdFormulario) {
+            throw new Error("ID do formulário inválido.");
+        }
+
+        setStatusText("Baixando perguntas...");
+        const dados = await getFormularioById(finalIdFormulario, token);
+        
+        if (dados && dados.perguntas && dados.perguntas.length > 0) {
+            setPerguntas(dados.perguntas);
+            setGameState('COUNTDOWN');
+        } else {
+            throw new Error("Este quiz não tem perguntas.");
+        }
+
+        // WebSocket
         const wsUrl = 'wss://tccdrakes.azurewebsites.net/ws-native';
         const client = new Client({
           brokerURL: wsUrl,
@@ -104,6 +130,7 @@ export default function PartidaScreen() {
                  try {
                      const pl = JSON.parse(msg.body);
                      if (pl.type === 'FIM_DE_JOGO' || pl.type === 'SALA_FECHADA') {
+                         Alert.alert("Aviso", "O jogo foi encerrado.");
                          router.replace('/home');
                      }
                  } catch(e){}
@@ -114,9 +141,10 @@ export default function PartidaScreen() {
         stompClientRef.current = client;
 
       } catch (error) {
-        console.log(error);
-        Alert.alert("Erro", "Falha ao carregar partida.");
-        router.replace('/home');
+        console.error("Erro fatal:", error);
+        Alert.alert("Erro", error.message || "Falha ao carregar partida.", [
+            { text: "Sair", onPress: () => router.replace('/home') }
+        ]);
       }
     };
     inicializar();
@@ -128,26 +156,25 @@ export default function PartidaScreen() {
   }, []);
 
   // ============================================================
-  // 2. CONFIGURAR PERGUNTA (Quando sai do Countdown)
+  // 2. CONFIGURAR PERGUNTA
   // ============================================================
   const iniciarPergunta = () => {
-      // Define tempo da pergunta (padrão 20s ou o que vier do back)
       const tempo = perguntaAtual?.tempo || 20; 
       setTimeLeft(tempo);
       setGameState('PLAYING');
   };
 
   // ============================================================
-  // 3. TIMER (Roda durante 'PLAYING')
+  // 3. TIMER
   // ============================================================
   useEffect(() => {
-    // O timer deve rodar se estamos jogando (mesmo se o usuário já respondeu e está vendo o overlay)
-    if (gameState === 'PLAYING' && timeLeft > 0) {
+    // Timer roda no jogo e no overlay de espera
+    if ((gameState === 'PLAYING' || gameState === 'WAITING_TIME') && timeLeft > 0) {
         timerRef.current = setInterval(() => {
             setTimeLeft((prev) => {
                 if (prev <= 1) {
                     clearInterval(timerRef.current);
-                    finalizarRodada(); // Tempo acabou
+                    finalizarRodada(); 
                     return 0;
                 }
                 return prev - 1;
@@ -158,45 +185,35 @@ export default function PartidaScreen() {
   }, [gameState, timeLeft]);
 
   // ============================================================
-  // 4. LÓGICA DE RESPOSTA (Usuário clicou)
+  // 4. RESPOSTA DO USUÁRIO
   // ============================================================
   const handleAnswerSelect = async (alternativa) => {
-      // Se já respondeu ou o tempo acabou, ignora
       if (selectedAnswer !== null || gameState !== 'PLAYING' || timeLeft <= 0) return;
 
       setSelectedAnswer(alternativa.idAlternativa);
+      setGameState('WAITING_TIME'); // Mostra overlay
 
-      // Envia resposta ao backend (Sem esperar, para não travar UI)
       try {
           const eu = await usuarioService.getMeuPerfil();
           const token = await usuarioService.getToken();
-          
           const payload = {
               idUsuario: eu.id,
               idPergunta: perguntaAtual.idPergunta || perguntaAtual.id,
               idAlternativaSelecionada: alternativa.idAlternativa,
-              tempoGasto: (perguntaAtual?.tempo || 20) - timeLeft, // Tempo que levou
+              tempoGasto: (perguntaAtual?.tempo || 20) - timeLeft,
               idSala: idSala
           };
-          
-          // Função importada do seu service (opcional se não tiver implementado ainda)
           if (enviarResposta) {
-             enviarResposta(payload, token).catch(err => console.log("Erro envio resposta:", err));
+             enviarResposta(payload, token).catch(() => {});
           }
-      } catch (e) { console.log(e); }
-
-      // Nota: Não mudamos o gameState aqui. O usuário vê o WaitingOverlay, 
-      // mas o timer (useEffect acima) continua rodando até zerar.
+      } catch (e) {}
   };
 
   // ============================================================
-  // 5. FINALIZAR RODADA (Tempo Esgotou)
+  // 5. FINALIZAR RODADA
   // ============================================================
   const finalizarRodada = () => {
-      // Verifica se acertou
       let acertou = false;
-      
-      // Se o usuário não respondeu, conta como erro
       if (selectedAnswer !== null) {
           const altEscolhida = perguntaAtual.alternativas.find(a => a.idAlternativa === selectedAnswer);
           if (altEscolhida && altEscolhida.correta) {
@@ -206,25 +223,29 @@ export default function PartidaScreen() {
       }
 
       setIsCorrect(acertou);
-      setGameState('RESULT'); // Mostra tela de Verified ou Error
+      setGameState('RESULT'); 
 
-      // Aguarda 3 segundos vendo o resultado e vai para próxima
       setTimeout(prepararProxima, 3000);
   };
 
   // ============================================================
-  // 6. PREPARAR PRÓXIMA (Ou Fim)
+  // 6. PRÓXIMA PERGUNTA
   // ============================================================
   const prepararProxima = () => {
       if (currentQuestionIndex < perguntas.length - 1) {
           setCurrentQuestionIndex(prev => prev + 1);
-          setSelectedAnswer(null); // Limpa resposta
-          setGameState('COUNTDOWN'); // Inicia contagem 3,2,1
+          setSelectedAnswer(null); 
+          setGameState('COUNTDOWN'); 
       } else {
-          // Fim do Jogo
-          Alert.alert("Fim de Jogo", `Você acertou ${acertos} de ${perguntas.length}!`, [
-              { text: "Sair", onPress: () => router.replace('/home') }
-          ]);
+          router.replace({
+            pathname: '/fim-de-jogo',
+            params: { 
+                acertos: acertos, 
+                total: perguntas.length,
+                codigoSala: codigoSala,
+                idSala: idSala
+            }
+          });
       }
   };
 
@@ -239,24 +260,21 @@ export default function PartidaScreen() {
   // RENDERIZAÇÃO
   // ============================================================
 
-  // 1. Loading Inicial
   if (gameState === 'LOADING') {
       return (
         <SafeAreaView style={[styles.safeArea, { justifyContent:'center', alignItems:'center'}]}>
             <ActivityIndicator size="large" color="#FFF" />
-            <Text style={{color:'#FFF', marginTop:10, fontFamily:'Poppins-Bold'}}>Carregando Quiz...</Text>
+            <Text style={{color:'#FFF', marginTop:10, fontFamily:'Poppins-Bold'}}>
+                {statusText}
+            </Text>
         </SafeAreaView>
       );
   }
 
-  // 2. Tela de Resultado (Importada)
-  // O componente ocupa a tela toda, então retornamos ele direto
   if (gameState === 'RESULT') {
       return isCorrect ? <Verified /> : <ErrorScreen />;
   }
 
-  // 3. Contagem Regressiva (3, 2, 1)
-  // Usa o seu componente CountdownOverlay
   if (gameState === 'COUNTDOWN') {
       return (
         <SafeAreaView style={styles.safeArea}>
@@ -270,12 +288,11 @@ export default function PartidaScreen() {
 
   if (!perguntaAtual) return null;
 
-  // 4. Tela do Jogo (Pergunta)
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor="#1CB0FC" />
       <CustomHeader showMenu={true} menuPosition="right" />
       
-      {/* Timer e Botão Sair */}
       <View style={styles.headerControls}>
         <View style={styles.timerButton}>
           <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
@@ -285,35 +302,28 @@ export default function PartidaScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Card da Pergunta */}
       <View style={styles.cardContainer}>
         <View style={styles.card}>
           
-          {/* OVERLAY DE ESPERA: Aparece se já respondeu, mas ainda estamos em 'PLAYING' (tempo não acabou) */}
-          {selectedAnswer !== null && gameState === 'PLAYING' && (
+          {selectedAnswer !== null && gameState === 'WAITING_TIME' && (
              <WaitingOverlay />
           )}
 
-          {/* Contador de Questão */}
           <Text style={styles.counterText}>
               Questão {currentQuestionIndex + 1} / {perguntas.length}
           </Text>
 
-          {/* Título/Tema */}
           <Text style={styles.categoryTitle}>
             {perguntaAtual.tema ? perguntaAtual.tema.nomeTema : 'QUIZ'}
           </Text>
           
-          {/* Texto da Pergunta */}
           <Text style={styles.questionText}>
             {perguntaAtual.textoPergunta}
           </Text>
           
-          {/* Alternativas */}
           <View style={styles.optionsContainer}>
             {perguntaAtual.alternativas && perguntaAtual.alternativas.map((alt) => {
               const isSelected = selectedAnswer === alt.idAlternativa;
-              
               return (
                 <TouchableOpacity
                   key={alt.idAlternativa}
@@ -321,7 +331,6 @@ export default function PartidaScreen() {
                     styles.optionButton,
                     isSelected && styles.optionButtonSelected
                   ]}
-                  // Só clica se ainda não escolheu nenhuma
                   onPress={() => !selectedAnswer && handleAnswerSelect(alt)}
                   activeOpacity={0.8}
                 >
@@ -336,29 +345,17 @@ export default function PartidaScreen() {
   );
 }
 
-// ============================================================
-// ESTILOS
-// ============================================================
-const PRIMARY_BLUE = '#1CB0FC';
-const DARK_BLUE = '#01324B';
-const RED = '#FF0000';
-const CARD_BG = '#FFFFFF';
-const TEXT_DARK = '#3B3939';
-const OPTION_BLUE = '#00B7FF';
-
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: PRIMARY_BLUE },
-  
-  // Header Controls
+  safeArea: { flex: 1, backgroundColor: '#1CB0FC' },
   headerControls: {
     position: 'absolute',
     top: height * 0.12,
     right: 20,
-    zIndex: 5, // Menor que o overlay
+    zIndex: 5,
     alignItems: 'flex-end',
   },
   timerButton: {
-    backgroundColor: DARK_BLUE,
+    backgroundColor: '#01324B',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -366,14 +363,12 @@ const styles = StyleSheet.create({
   },
   timerText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-Bold' },
   exitButton: {
-    backgroundColor: RED,
+    backgroundColor: '#FF0000',
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   exitText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-Bold' },
-  
-  // Card
   cardContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -382,7 +377,7 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   card: {
-    backgroundColor: CARD_BG,
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     width: '100%',
@@ -392,12 +387,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 12,
-    // Importante para o WaitingOverlay ficar preso dentro do card
     overflow: 'hidden', 
     position: 'relative' 
   },
-  
-  // Textos
   counterText: {
       textAlign: 'center',
       color: '#888',
@@ -407,7 +399,7 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 20,
     fontFamily: 'Poppins-Bold',
-    color: TEXT_DARK,
+    color: '#3B3939',
     textAlign: 'center',
     marginBottom: 15,
     letterSpacing: 1,
@@ -416,22 +408,20 @@ const styles = StyleSheet.create({
   questionText: {
     fontSize: 16,
     fontFamily: 'Poppins-Regular',
-    color: TEXT_DARK,
+    color: '#3B3939',
     lineHeight: 24,
     marginBottom: 24,
     textAlign: 'center'
   },
-  
-  // Opções
   optionsContainer: { gap: 12 },
   optionButton: {
-    backgroundColor: OPTION_BLUE,
+    backgroundColor: '#00B7FF',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
   optionButtonSelected: {
-    backgroundColor: '#1D4ED8', // Azul mais escuro para indicar seleção
+    backgroundColor: '#1D4ED8',
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
