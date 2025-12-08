@@ -20,30 +20,30 @@ const ContatoStyles = StyleSheet.create({
     backgroundColor: '#ffff',
   },
   // --- Título da Página ---
-  newTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: width * 0.05, // 5% da largura da tela
-    marginTop: height * 0.03, // 3% da altura da tela
-    marginBottom: height * 0.02,
-  },
+  
   blueBar: {
     width: width * 0.02,
     height: height * 0.035,
     backgroundColor: Cores.blueBar,
     marginRight: width * 0.03,
     borderRadius: 10,
+    marginTop: height * 0.05,
   },
   pageTitle: {
     fontSize: width * 0.055, // Fonte responsiva
     fontFamily: 'Poppins-bold',
     color: Cores.pageTitle,
+    marginBottom: height * 0.05,
+    marginLeft: width * 0.05,
+    marginTop: height * - 0.03
+    
   },
 
   // --- Conteúdo do Formulário ---
   content: {
     flex: 1,
     paddingHorizontal: width * 0.05,
+    paddingBottom: height * 0.05,
   },
   label: {
     fontSize: width * 0.038, // Fonte responsiva

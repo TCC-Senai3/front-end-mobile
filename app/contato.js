@@ -1,148 +1,122 @@
-// app/contato.js
-
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal } from 'react-native';
-import { Stack } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
-import ContatoStyles from '../styles/ContatoStyles';
-import CustomHeader from '../components/CustomHeader';
-import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
-
-const isEmailValido = (email) => {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
-};
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Linking,
+  Modal,
+} from "react-native";
+import { Stack } from "expo-router";
+import CustomHeader from "../components/CustomHeader";
+import styles from "../styles/ContatoStyles";
 
 export default function ContatoScreen() {
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [mensagem, setMensagem] = useState('');
-  const [showSuccessCard, setShowSuccessCard] = useState(false);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [mensagem, setMensagem] = useState("");
+  const [successVisible, setSuccessVisible] = useState(false);
 
-  // ESTADOS PARA OS ERROS DE CADA CAMPO
-  const [nomeError, setNomeError] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [mensagemError, setMensagemError] = useState('');
-
-   const [fontsLoaded] = useFonts({
-    'Poppins-Bold': require('../assets/fonts/Poppins/Poppins-Bold.ttf'),
-    'Poppins-Medium': require('../assets/fonts/Poppins/Poppins-Medium.ttf'),
-    'Poppins-Regular': require('../assets/fonts/Poppins/Poppins-Regular.ttf'),
-    'Blinker-Regular': require('../assets/fonts/Blinker/Blinker-Regular.ttf'),
-
-
-  });
-  
-
-  const handleEnviar = () => {
-    let hasError = false;
-
-    // 1. Valida campo Nome
-    if (!nome.trim()) {
-      setNomeError('O campo Nome é obrigatório.');
-      hasError = true;
-    } else {
-      setNomeError('');
-    }
-
-    // 2. Valida campo Email
-    if (!email.trim()) {
-      setEmailError('O campo Email é obrigatório.');
-      hasError = true;
-    } else if (!isEmailValido(email)) {
-      setEmailError('Por favor, insira um e-mail válido.');
-      hasError = true;
-    } else {
-      setEmailError('');
-    }
-
-    // 3. Valida campo Mensagem
-    if (!mensagem.trim()) {
-      setMensagemError('O campo Mensagem é obrigatório.');
-      hasError = true;
-    } else {
-      setMensagemError('');
-    }
-
-    // Se houver qualquer erro, não continua
-    if (hasError) {
+  const enviar = () => {
+    if (!nome.trim() || !email.trim() || !mensagem.trim()) {
+      Alert.alert("Atenção", "Preencha todos os campos.");
       return;
     }
-    
-    // Se tudo estiver certo, limpa os campos e mostra o sucesso
-    setNome('');
-    setEmail('');
-    setMensagem('');
-    setShowSuccessCard(true);
 
-    setTimeout(() => {
-      setShowSuccessCard(false);
-    }, 3000);
+    const subject = encodeURIComponent(`Contato de ${nome}`);
+    const body = encodeURIComponent(
+      `Nome: ${nome}\nEmail: ${email}\n\nMensagem:\n${mensagem}`
+    );
+    const to = "osdrakedosenai@gmail.com";
+
+    const mailUrl = `mailto:${to}?subject=${subject}&body=${body}`;
+
+    Linking.openURL(mailUrl)
+      .then(() => {
+        setSuccessVisible(true);
+        setNome("");
+        setEmail("");
+        setMensagem("");
+      })
+      .catch(() => {
+        Alert.alert("Erro", "Não foi possível abrir o app de email.");
+      });
   };
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={ContatoStyles.container}>
-        <CustomHeader title="" showMenu={true} />
 
-        <Modal
-          transparent={true}
-          animationType="fade"
-          visible={showSuccessCard}
+      <SafeAreaView style={styles.container}>
+        <CustomHeader showMenu={true} />
+
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <View style={ContatoStyles.modalOverlay}>
-            <View style={ContatoStyles.successCard}>
-              <Feather name="check-circle" size={40} color="#28a745" />
-              <Text style={ContatoStyles.successCardText}>Mensagem Enviada!</Text>
-            </View>
+          <ScrollView contentContainerStyle={styles.content}>
+<View style={styles.newTitleContainer}>
+  <View style={styles.blueBar} />
+  <Text style={styles.pageTitle}>Contato</Text>
+</View>
+
+            <Text style={styles.inputLabel}>Nome</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Seu nome"
+              placeholderTextColor="#777"
+              value={nome}
+              onChangeText={setNome}
+            />
+
+            <Text style={styles.inputLabel}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Seu email"
+              placeholderTextColor="#777"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            <Text style={styles.inputLabel}>Mensagem</Text>
+            <TextInput
+              style={styles.textArea}
+              placeholder="Digite sua mensagem"
+              placeholderTextColor="#777"
+              value={mensagem}
+              onChangeText={setMensagem}
+              multiline
+            />
+
+            <TouchableOpacity style={styles.button} onPress={enviar}>
+              <Text style={styles.buttonText}>Enviar</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+
+      {/* Modal de sucesso */}
+      <Modal
+        visible={successVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSuccessVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.successCard}>
+            <Text style={styles.successCardText}>
+              App de email aberto!
+            </Text>
           </View>
-        </Modal>
-
-        <View style={ContatoStyles.newTitleContainer}>
-          <View style={ContatoStyles.blueBar} />
-          <Text style={ContatoStyles.pageTitle}>Contato</Text>
         </View>
-
-        <View style={ContatoStyles.content}>
-          <Text style={ContatoStyles.label}>Algum problema, dúvida ou sugestão? Dê sua opnião sobre o nosso projeto!</Text>
-          
-          <Text style={ContatoStyles.inputLabel}>Seu Nome:</Text>
-          <TextInput
-            style={[ContatoStyles.input, nomeError ? ContatoStyles.inputError : null]}
-            placeholder="Digite seu nome"
-            value={nome}
-            onChangeText={text => { setNome(text); setNomeError(''); }}
-          />
-          {nomeError ? <Text style={ContatoStyles.errorMessage}>{nomeError}</Text> : null}
-          
-          <Text style={ContatoStyles.inputLabel}>Email:</Text>
-          <TextInput
-            style={[ContatoStyles.input, emailError ? ContatoStyles.inputError : null]}
-            placeholder="digite seu email"
-            value={email}
-            onChangeText={text => { setEmail(text); setEmailError(''); }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          {emailError ? <Text style={ContatoStyles.errorMessage}>{emailError}</Text> : null}
-          
-          <Text style={ContatoStyles.inputLabel}>Mensagem:</Text>
-          <TextInput
-            style={[ContatoStyles.textArea, mensagemError ? ContatoStyles.inputError : null]}
-            placeholder="Digite sua mensagem"
-            value={mensagem}
-            onChangeText={text => { setMensagem(text); setMensagemError(''); }}
-            multiline
-          />
-          {mensagemError ? <Text style={ContatoStyles.errorMessage}>{mensagemError}</Text> : null}
-          
-          <TouchableOpacity style={ContatoStyles.button} onPress={handleEnviar}>
-            <Text style={ContatoStyles.buttonText}>Enviar</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      </Modal>
     </>
   );
 }

@@ -92,7 +92,7 @@ const CustomHeader = ({
   };
 
   const menuItems = [
-    { name: 'Início', path: '/game' }, 
+    { name: 'Início', path: '/jogo' }, 
     { name: 'Termos', path: '/termos' },
     { name: 'Contato', path: '/contato' },
     { name: 'Minha Conta', path: '/perfil' },
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   menuPerfil: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: width * 0.05,
+    paddingHorizontal: width * 0.08,
     paddingVertical: height * 0.02,
     marginTop: height * 0.06,
     borderBottomWidth: 1,
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: width * 0.02,
-    marginRight: width * 0.04,
+    marginRight: width * 0.09
   },
   menuframeRight: {
     flexDirection: 'row-reverse',
@@ -332,22 +332,14 @@ const styles = StyleSheet.create({
     fontFamily : 'Blinker-Regular',
     color: '#fff',
     flex: 1,
-    marginHorizontal: width * 0.02,
+    marginHorizontal: width * 0.04,
   },
   scoreContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  medalImage: {
-    width: width * 0.07,
-    height: width * 0.07,
-    marginRight: width * 0.03,
-  },
-  pontuacao: {
-    fontSize: width * 0.045,
-    color: '#000000',
-    fontFamily: 'Poppins-Regular',
-  },
+ 
+  
   menuItemsContainer: {
     paddingHorizontal: width * 0.05,
   },

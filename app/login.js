@@ -18,7 +18,7 @@ import { Feather } from "@expo/vector-icons";
 import styles from "../styles/LoginStyles";
 import CustomHeader from "../components/CustomHeader";
 
-// IMPORTAÇÃO DO SERVICE
+// SERVICE
 import { loginUsuario } from "../services/usuarioService";
 
 export default function LoginScreen() {
@@ -32,13 +32,12 @@ export default function LoginScreen() {
   const contentOpacity = useRef(new Animated.Value(0)).current;
   const footerOpacity = useRef(new Animated.Value(0)).current;
 
-  // Fontes
   const [fontsLoaded] = useFonts({
     "Poppins-Bold": require("../assets/fonts/Poppins/Poppins-Bold.ttf"),
     "Poppins-Regular": require("../assets/fonts/Poppins/Poppins-Regular.ttf"),
   });
 
-  // Fade-in da tela
+  // Fade-in
   useFocusEffect(
     useCallback(() => {
       Animated.parallel([
@@ -61,7 +60,7 @@ export default function LoginScreen() {
     }, [])
   );
 
-  // Animação do botão
+  // Botão animado
   const scaleValue = useRef(new Animated.Value(1)).current;
   const colorAnimation = useRef(new Animated.Value(0)).current;
   const [isHovered, setIsHovered] = useState(false);
@@ -102,7 +101,7 @@ export default function LoginScreen() {
     backgroundColor: animatedBackgroundColor,
   };
 
-  // Navegação suave
+  // Navegação animada
   const navigateWithFadeOut = (path) => {
     Animated.parallel([
       Animated.timing(contentOpacity, {
@@ -118,7 +117,9 @@ export default function LoginScreen() {
     ]).start(() => router.push(path));
   };
 
-  // *************** LOGIN REAL ***************
+  // ============================
+  // 🚀 LOGIN REAL
+  // ============================
   const handleLogin = async () => {
     if (!email.trim() || !senha.trim()) {
       setErro("Por favor, preencha todos seus campos");
@@ -134,14 +135,13 @@ export default function LoginScreen() {
     setIsLoading(true);
 
     try {
-      const resposta = await loginUsuario(email, senha);
-
-      // Se quiser, salve token:
-      // await AsyncStorage.setItem("token", resposta.token);
+      await loginUsuario(email, senha); // service já retorna erro correto
 
       navigateWithFadeOut("/jogo");
+
     } catch (error) {
-      setErro(error.message || "Erro ao tentar realizar login.");
+      // 🚨 Aqui garantimos que SEMPRE vai aparecer "Email ou senha incorretos."
+      setErro("Email ou senha incorretos.");
     } finally {
       setIsLoading(false);
     }
@@ -166,7 +166,7 @@ export default function LoginScreen() {
         >
           <View style={styles.backgroundEllipse} />
 
-          {/* Conteúdo principal */}
+          {/* Conteúdo */}
           <Animated.View style={[styles.content, { opacity: contentOpacity }]}>
             <Text style={styles.title}>Login</Text>
 
