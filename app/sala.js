@@ -1,3 +1,5 @@
+// app/sala.js
+
 // ==================================================================== 
 // 1. POLYFILL (ESSENCIAL PARA O WEBSOCKET NO REACT NATIVE)
 // ====================================================================
@@ -54,7 +56,7 @@ export default function Sala() {
   const stompClientRef = useRef(null);
 
   // ============================================================
-  // AVATARS — CORREÇÃO COMPLETA
+  // AVATARS — MAPEAMENTO
   // ============================================================
   const avatarMap = {
     'bode': BodeIcon,
@@ -78,47 +80,75 @@ export default function Sala() {
   };
 
   // ============================================================
-  // 1. CARGA INICIAL
+  // CARREGAR DADOS INICIAIS
+  // - busca sala, registra entrada caso necessário e popula lista
   // ============================================================
   const carregarDadosIniciais = useCallback(async () => {
     if (!codigo) return;
 
     try {
       const eu = await usuarioService.getMeuPerfil();
+      const token = await usuarioService.getToken();
       setCurrentUser(eu);
 
-      const sala = await salaService.getSalaByPin(codigo);
-      if (!sala) return;
+      // 1) Busca a sala (com token, quando disponível)
+      const sala = await salaService.getSalaByPin(codigo, token);
+      if (!sala) {
+        setLoading(false);
+        return;
+      }
 
       setSalaInfo(sala);
       setIsDonoDaSala(String(eu.id) === String(sala.idUsuario));
 
+      // Monta lista de IDs dos participantes
       let listaIds = [];
-
       if (sala.participantes) {
         listaIds = sala.participantes.map(p => p.idUsuario || p.id);
       } else if (sala.idParticipantes) {
         listaIds = sala.idParticipantes;
       }
 
-      if (!listaIds.includes(eu.id)) listaIds.push(eu.id);
+      // id real da sala (API às vezes usa 'id')
+      const idSalaReal = sala.idSala || sala.id;
 
+      // 2) Se eu não estou na lista, registra minha entrada no backend
+      if (!listaIds.includes(eu.id)) {
+        try {
+          // tentar registrar no backend (não trava a UI)
+          await salaService.entrarNaSala(idSalaReal, eu.id, token);
+          // adiciona visualmente para aparecer na lista local
+          listaIds.push(eu.id);
+        } catch (err) {
+          console.warn("⚠️ Não foi possível registrar entrada:", err);
+          // mesmo que o registro falhe, adicionamos visualmente para o usuário ver a si mesmo
+          if (!listaIds.includes(eu.id)) listaIds.push(eu.id);
+        }
+      }
+
+      // 3) Busca dados completos dos usuários (nome/avatar)
       if (listaIds.length > 0) {
         const results = await Promise.all(
           listaIds.map(id => usuarioService.getUsuarioById(id))
         );
 
         const valid = results.filter(u => u && u.id);
+        // remove duplicados mantendo a ordem original
         const unique = Array.from(new Map(valid.map(i => [i.id, i])).values());
 
         setUsuarios(unique);
       }
 
     } catch (err) {
+      console.error("Erro ao carregar dados iniciais da sala:", err);
+      // fallback: tenta pelo menos mostrar o usuário corrente
       try {
         const eu = await usuarioService.getMeuPerfil();
+        setCurrentUser(eu);
         setUsuarios([{ id: eu.id, nome: eu.nome, avatar: eu.avatar }]);
-      } catch(e){}
+      } catch (e) {
+        console.warn("Falha no fallback de usuário:", e);
+      }
     } finally {
       setLoading(false);
     }
@@ -130,15 +160,15 @@ export default function Sala() {
       return;
     }
     carregarDadosIniciais();
-  }, [codigo]);
+  }, [codigo, carregarDadosIniciais, router]);
 
   // ============================================================
-  // 2. WEBSOCKET
+  // WEBSOCKET: recebe eventos da sala (entrar, sair, iniciar, etc)
   // ============================================================
   useEffect(() => {
     if (!codigo) return;
 
-    let client = null;
+    let clientInstance = null;
 
     const iniciarSocket = async () => {
       try {
@@ -146,7 +176,7 @@ export default function Sala() {
         const token = await usuarioService.getToken();
         const wsUrl = 'wss://tccdrakes.azurewebsites.net/ws-native';
 
-        client = new Client({
+        clientInstance = new Client({
           brokerURL: wsUrl,
           connectHeaders: { Authorization: `Bearer ${token}` },
           reconnectDelay: 5000,
@@ -154,75 +184,55 @@ export default function Sala() {
           heartbeatOutgoing: 4000,
           forceBinaryWSFrames: true,
           appendMissingNULLonIncoming: true,
-
           onConnect: () => {
-            console.log('WS conectado');
-
-            // ---------- SUBSCRIBE DA SALA ----------
-            client.subscribe(`/topic/sala/${codigo}`, (msg) => {
+            // subscribe tópico público da sala
+            clientInstance.subscribe(`/topic/sala/${codigo}`, (msg) => {
               try {
                 const payload = JSON.parse(msg.body);
 
-                // =====================================================
-                // 🔵 USUARIO ENTROU — CORREÇÃO DEFINITIVA DO AVATAR
-                // =====================================================
                 if (payload.type === "USUARIO_ENTROU") {
                   const u = payload.usuario;
-
-                  // 1) Já adiciona rápido
+                  // adiciona rápido se não existir
                   setUsuarios(prev => {
-                    if (prev.some(p => p.id === u.id)) return prev;
-
-                    return [...prev, {
-                      id: u.id,
-                      nome: u.nome,
-                      avatar: u.avatar ?? null
-                    }];
+                    if (prev.some(p => String(p.id) === String(u.id))) return prev;
+                    return [...prev, { id: u.id, nome: u.nome, avatar: u.avatar ?? null }];
                   });
 
-                  // 2) Busca versão completa no banco
+                  // busca dados completos e atualiza
                   usuarioService.getUsuarioById(u.id).then(full => {
-                    if (full) {
+                    if (full && full.id) {
                       setUsuarios(prev =>
                         prev.map(p =>
-                          p.id === full.id
-                            ? { 
-                                ...p,
-                                nome: full.nome,
-                                avatar: full.avatar || p.avatar
-                              }
+                          String(p.id) === String(full.id)
+                            ? { ...p, nome: full.nome, avatar: full.avatar || p.avatar }
                             : p
                         )
                       );
                     }
-                  });
+                  }).catch(() => {});
                 }
 
-                // =====================================================
-                // Lista completa atualizada
-                // =====================================================
                 else if (payload.type === "USUARIOS_ATUALIZADOS") {
                   const lista = payload.participantes || [];
                   setUsuarios(prev => {
-                    const old = new Map(prev.map(u => [u.id, u]));
+                    const old = new Map(prev.map(u => [String(u.id), u]));
                     return lista.map(n => ({
                       id: n.id,
                       nome: n.nome,
-                      avatar: n.avatar || old.get(n.id)?.avatar || null
+                      avatar: n.avatar || old.get(String(n.id))?.avatar || null
                     }));
                   });
                 }
 
-                // =====================================================
                 else if (payload.type === "USUARIO_SAIU") {
                   setUsuarios(prev =>
                     prev.filter(p => String(p.id) !== String(payload.idUsuario))
                   );
                 }
 
-                // =====================================================
                 else if (payload.type === "JOGO_INICIADO") {
-                  client.deactivate();
+                  // desconecta ws e vai para /partida com parâmetros do servidor
+                  clientInstance.deactivate();
                   router.replace({
                     pathname: '/partida',
                     params: {
@@ -233,19 +243,18 @@ export default function Sala() {
                   });
                 }
 
-                // =====================================================
                 else if (payload.type === "SALA_FECHADA") {
                   Alert.alert("Aviso", "A sala foi encerrada.");
                   router.replace('/jogo');
                 }
 
               } catch (err) {
-                console.log("Erro JSON:", err);
+                console.log("Erro ao parsear payload WS:", err);
               }
             });
 
-            // ---------- TÓPICO PRIVADO ----------
-            client.subscribe(`/user/queue/expulso`, (msg) => {
+            // tópico privado para expulso
+            clientInstance.subscribe(`/user/queue/expulso`, (msg) => {
               try {
                 const payload = JSON.parse(msg.body);
                 if (payload?.type === 'EXPULSO') {
@@ -257,8 +266,8 @@ export default function Sala() {
           },
         });
 
-        client.activate();
-        stompClientRef.current = client;
+        clientInstance.activate();
+        stompClientRef.current = clientInstance;
 
       } catch (err) {
         console.error('Erro socket:', err);
@@ -268,12 +277,15 @@ export default function Sala() {
     iniciarSocket();
 
     return () => {
-      if (stompClientRef.current) stompClientRef.current.deactivate();
+      try {
+        stompClientRef.current?.deactivate();
+        stompClientRef.current = null;
+      } catch (e) {}
     };
-  }, [codigo]);
+  }, [codigo, router]);
 
   // ============================================================
-  // AÇÕES
+  // AÇÕES: sair/desmanchar sala
   // ============================================================
   const handleDesmanchar = async () => {
     setActionLoading(true);
@@ -289,12 +301,16 @@ export default function Sala() {
       }
       router.replace('/jogo');
     } catch (err) {
+      console.error("Erro ao desmanchar/sair:", err);
       router.replace('/jogo');
     } finally {
       setActionLoading(false);
     }
   };
 
+  // ============================================================
+  // AÇÃO: iniciar jogo (corrigido para enviar o idSala correto)
+  // ============================================================
   const handleIniciar = async () => {
     if (!isDonoDaSala) return;
 
@@ -308,21 +324,33 @@ export default function Sala() {
       const token = await usuarioService.getToken();
       const dest = `/app/sala/${codigo}/iniciar`;
 
+      // Envia mensagem WS (se estiver conectado)
       if (stompClientRef.current?.connected) {
         stompClientRef.current.publish({
           destination: dest,
           body: JSON.stringify({ idUsuario: eu.id }),
         });
       } else {
+        // fallback: requisita via API
         await salaService.iniciarSala(codigo, eu.id, token);
       }
 
+      // **CORREÇÃO IMPORTANTE**: usar 'id' primeiro (id real da sala)
+      const idSalaReal = salaInfo?.id || salaInfo?.idSala;
+
       router.replace({
         pathname: '/partida',
-        params: { codigoSala: codigo }
+        params: {
+          codigoSala: codigo,
+          idSala: idSalaReal,     // <--- AGORA SEMPRE VEM CERTO
+          idFormulario: salaInfo?.idFormulario,
+        }
       });
+
     } catch (err) {
+      console.error("Falha ao iniciar sala:", err);
       Alert.alert("Erro", "Falha ao iniciar.");
+    } finally {
       setActionLoading(false);
     }
   };
@@ -340,6 +368,7 @@ export default function Sala() {
         prev.filter(u => String(u.id) !== String(idUsuario))
       );
     } catch (err) {
+      console.error("Erro ao expulsar:", err);
       Alert.alert("Erro", "Falha ao expulsar.");
     } finally {
       setActionLoading(false);
@@ -366,8 +395,8 @@ export default function Sala() {
         </Text>
 
         <View style={styles.actions}>
-          <TouchableOpacity 
-            style={styles.btnDanger} 
+          <TouchableOpacity
+            style={styles.btnDanger}
             onPress={handleDesmanchar}
             disabled={actionLoading}
           >
@@ -446,7 +475,7 @@ export default function Sala() {
 
                 <TouchableOpacity
                   style={styles.modalConfirm}
-                  onPress={() => handleExpulsar(usuarioSelecionado.id)}
+                  onPress={() => handleExpulsar(usuarioSelecionado?.id)}
                 >
                   <Text style={styles.modalConfirmText}>Sim, remover</Text>
                 </TouchableOpacity>
@@ -461,80 +490,24 @@ export default function Sala() {
   );
 }
 
+/* ------------------ STYLES ------------------ */
+
 const styles = StyleSheet.create({
-  // ================================
-  // 📌 LAYOUT PRINCIPAL
-  // ================================
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#1CB0FC',
-  },
+  safeArea: { flex: 1, backgroundColor: '#1CB0FC' },
+  container: { flex: 1, padding: 16, alignItems: 'center' },
 
-  container: {
-    flex: 1,
-    padding: 16,
-    alignItems: 'center',
-  },
+  headerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  codeLabel: { color: '#FFF', fontSize: 20, marginRight: 8, fontWeight: 'bold' },
+  codeValue: { color: '#FFF', fontSize: 28, fontWeight: '700' },
 
-  // ================================
-  // 📌 CABEÇALHO (código da sala)
-  // ================================
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
+  roomName: { color: 'rgba(255,255,255,0.9)', fontSize: 17, marginTop: 5 },
 
-  codeLabel: {
-    color: '#FFF',
-    fontSize: 20,
-    marginRight: 8,
-    fontWeight: 'bold',
-  },
+  actions: { flexDirection: 'row', marginTop: 14, marginBottom: 14 },
 
-  codeValue: {
-    color: '#FFF',
-    fontSize: 28,
-    fontWeight: '700',
-  },
+  btnDanger: { backgroundColor: '#FF0000', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10 },
+  btnWarning: { backgroundColor: '#FF9D00', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10 },
+  btnText: { color: '#FFF', fontWeight: '700' },
 
-  roomName: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 17,
-    marginTop: 5,
-  },
-
-  // ================================
-  // 📌 AÇÕES DO DONO DA SALA
-  // ================================
-  actions: {
-    flexDirection: 'row',
-    marginTop: 14,
-    marginBottom: 14,
-  },
-
-  btnDanger: {
-    backgroundColor: '#FF0000',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
-
-  btnWarning: {
-    backgroundColor: '#FF9D00',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
-
-  btnText: {
-    color: '#FFF',
-    fontWeight: '700',
-  },
-
-  // ================================
-  // 📌 LISTA DE JOGADORES
-  // ================================
   playersGrid: {
     width: '100%',
     flexDirection: 'row',
@@ -556,91 +529,24 @@ const styles = StyleSheet.create({
     marginTop: 25,
   },
 
-  avatarWrapper: {
-    position: 'absolute',
-    top: -20,
-    left: 10,
-    right: 0,
-    alignItems: 'center',
-  },
+  avatarWrapper: { position: 'absolute', top: -20, left: 10, right: 0, alignItems: 'center' },
+  avatarCircle: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
 
-  playerName: {
-    marginTop: 12,
-    fontWeight: '600',
-    color: '#333',
-  },
+  playerName: { marginTop: 12, fontWeight: '600', color: '#333' },
 
-  // ================================
-  // 📌 MENSAGENS E ERROS
-  // ================================
-  msg: {
-    marginTop: 30,
-    color: '#FFF',
-  },
+  msg: { marginTop: 30, color: '#FFF' },
+  error: { marginTop: 12, color: '#ffdddd' },
 
-  error: {
-    marginTop: 12,
-    color: '#ffdddd',
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalContent: { width: 280, backgroundColor: '#FFF', borderRadius: 12, padding: 20, alignItems: 'center' },
 
-  // ================================
-  // 📌 MODAL (sair da sala / encerrar sala)
-  // ================================
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  modalMessage: { fontSize: 16, marginBottom: 20, textAlign: 'center' },
 
-  modalContent: {
-    width: 280,
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-  },
+  modalActions: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+  modalCancel: { backgroundColor: '#ccc', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
+  modalCancelText: { fontWeight: '700', color: '#333' },
 
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-
-  modalMessage: {
-    fontSize: 16,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-
-  modalCancel: {
-    backgroundColor: '#ccc',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-
-  modalCancelText: {
-    fontWeight: '700',
-    color: '#333',
-  },
-
-  modalConfirm: {
-    backgroundColor: '#FF0000',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-
-  modalConfirmText: {
-    fontWeight: '700',
-    color: '#FFF',
-  },
+  modalConfirm: { backgroundColor: '#FF0000', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
+  modalConfirmText: { fontWeight: '700', color: '#FFF' },
 });
-

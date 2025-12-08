@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   StatusBar
 } from 'react-native';
+
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import CustomHeader from '../components/CustomHeader';
 
@@ -25,8 +26,8 @@ import BodeIcon from '../components/icons/BodeIcon';
 import CanetabicIcon from '../components/icons/CanetabicIcon';
 import PatoIcon from '../components/icons/PatoIcon';
 
-// Troféu do campeão
-import TrophyIcon from '../components/icons/VerifiedIcon';
+// Troféu
+import TrophyIcon from '../components/icons/campeao1Icon';
 
 const { width } = Dimensions.get('window');
 
@@ -34,29 +35,37 @@ export default function FimDeJogo() {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  const { acertos, total, idSala } = params;
+  // Dados vindos da partida
+  const acertos = Number(params.acertos || 0);
+  const total = Number(params.total || 0);
 
+  // ID da sala pode vir como string, arrumamos aqui
+  const idSalaParam = params.idSala ? Number(params.idSala) : null;
+
+  const [idSala, setIdSala] = useState(idSalaParam);
   const [ranking, setRanking] = useState([]);
   const [podiumData, setPodiumData] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [currentUser, setCurrentUser] = useState(null);
 
-  // Mapa de avatares
+  // Avatares
   const avatarMap = {
-    'bode.svg': BodeIcon, bode: BodeIcon,
-    'canetabic.svg': CanetabicIcon, caneta: CanetabicIcon,
-    'pato.svg': PatoIcon, pato: PatoIcon,
+    'bode': BodeIcon, 'bode.svg': BodeIcon,
+    'pato': PatoIcon, 'pato.svg': PatoIcon,
+    'canetabic': CanetabicIcon, 'canetabic.svg': CanetabicIcon,
+    'caneta': CanetabicIcon
   };
 
   const getAvatarComponent = (name) => {
     if (!name) return Userprofile2Icon;
-    const clean = String(name).toLowerCase().replace('.svg', '');
+    const clean = String(name).trim().toLowerCase().replace('.svg', '');
     return avatarMap[clean] || Userprofile2Icon;
   };
 
-  // Busca ranking da sala
+  // Carregar ranking completo
   useEffect(() => {
-    const carregar = async () => {
+    const carregarRanking = async () => {
       try {
         setLoading(true);
 
@@ -64,28 +73,37 @@ export default function FimDeJogo() {
         const user = await usuarioService.getMeuPerfil();
         setCurrentUser(user);
 
-        const dados = await rankingSalaService.getRankingSala(idSala, token);
+        // Se idSala vier errado, não quebra
+        const id = Number(idSala) || Number(idSalaParam);
+        setIdSala(id);
 
-        const organizado = dados
+        const dadosRanking = await rankingSalaService.getRankingSala(id, token);
+
+        // Normalizar dados
+        const organizado = (dadosRanking || [])
           .map((jogador, index) => ({
-            id: jogador.id ?? index,
-            nome: jogador.nomeUsuario ?? "Anônimo",
-            avatar: jogador.avatar,
-            pontos: jogador.pontuacao ?? 0,
+            id: jogador.id ?? jogador.idUsuario ?? index,
+            nome: jogador.nomeUsuario ?? jogador.nome ?? "Anônimo",
+            avatar: jogador.avatar ?? null,
+            pontos: Number(jogador.pontuacao ?? jogador.pontos ?? 0)
           }))
           .sort((a, b) => b.pontos - a.pontos)
-          .map((j, i) => ({ ...j, posicao: i + 1 }));
+          .map((item, index) => ({
+            ...item,
+            posicao: index + 1
+          }));
 
         setRanking(organizado);
         setPodiumData(organizado.slice(0, 3));
-      } catch (e) {
-        console.log("Erro ao carregar ranking:", e);
+
+      } catch (err) {
+        console.log("❌ Erro ao buscar ranking:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    carregar();
+    carregarRanking();
   }, [idSala]);
 
   return (
@@ -123,7 +141,7 @@ export default function FimDeJogo() {
                 <View style={styles.winnerAvatarCircle}>
                   {(() => {
                     const Avatar = getAvatarComponent(podiumData[0].avatar);
-                    return <Avatar width={40} height={40} />;
+                    return <Avatar width={50} height={50} />;
                   })()}
                 </View>
 
@@ -142,10 +160,10 @@ export default function FimDeJogo() {
 
             {ranking.map((jogador) => {
               const Avatar = getAvatarComponent(jogador.avatar);
-              const isMe = currentUser?.id == jogador.id;
+              const isMe = Number(currentUser?.id) === Number(jogador.id);
 
               return (
-                <View
+                <View 
                   key={jogador.id}
                   style={[styles.rankingRow, isMe && styles.myRow]}
                 >
@@ -153,9 +171,11 @@ export default function FimDeJogo() {
 
                   <View style={styles.rankUser}>
                     <View style={styles.rankAvatar}>
-                      <Avatar width={24} height={24} />
+                      <Avatar width={50} height={50} />
                     </View>
-                    <Text style={styles.rankName}>{jogador.nome}</Text>
+                    <Text style={styles.rankName}>
+                      {isMe ? `${jogador.nome} (Você)` : jogador.nome}
+                    </Text>
                   </View>
 
                   <Text style={styles.rankPoints}>{jogador.pontos} pts</Text>
@@ -166,7 +186,10 @@ export default function FimDeJogo() {
         )}
 
         {/* BOTÃO VOLTAR */}
-        <TouchableOpacity style={styles.btnVoltar} onPress={() => router.replace('/home')}>
+        <TouchableOpacity 
+          style={styles.btnVoltar} 
+          onPress={() => router.replace('/home')}
+        >
           <Text style={styles.btnText}>VOLTAR AO MENU</Text>
         </TouchableOpacity>
 
@@ -181,7 +204,11 @@ const PRIMARY_BLUE = '#1CB0FC';
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: PRIMARY_BLUE },
-  scrollContent: { paddingBottom: 40, alignItems: 'center' },
+
+  scrollContent: {
+    paddingBottom: 40,
+    alignItems: 'center'
+  },
 
   title: {
     color: '#FFF',
@@ -207,12 +234,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  highlight: { fontWeight: 'bold', fontSize: 20, color: '#FFF' },
+  highlight: { 
+    fontWeight: 'bold', 
+    fontSize: 20, 
+    color: '#FFF' 
+  },
 
   podiumContainer: {
     alignItems: 'center',
     marginBottom: 30,
     width: '100%',
+   
   },
 
   sectionTitle: {
@@ -222,29 +254,39 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 
-  firstPlaceContainer: { alignItems: 'center' },
+  firstPlaceContainer: { 
+    alignItems: 'center' 
+  },
 
   winnerCard: {
     backgroundColor: '#FFF',
     borderRadius: 50,
     paddingVertical: 10,
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: -20,
+    marginTop: 10,
     elevation: 5,
   },
 
   winnerAvatarCircle: {
-    width: 10,
-    height: 10,
+    width: 40,
+    height: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 25,
+    marginRight: 20,
+   
   },
 
-  winnerName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  winnerName: { 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    color: '#333',
+    marginRight: 40,
+    marginlefth: 50
+
+  },
 
   winnerPoints: {
     marginTop: 10,
@@ -275,23 +317,37 @@ const styles = StyleSheet.create({
     borderColor: '#FFF',
   },
 
-  rankPos: { width: 40, color: '#FFF', fontSize: 16, fontWeight: 'bold' },
-
-  rankUser: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-
-  rankAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#EEE',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
+  rankPos: { 
+    width: 40, 
+    color: '#FFF', 
+    fontSize: 16, 
+    fontWeight: 'bold' 
   },
 
-  rankName: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  rankUser: { 
+    flex: 1, 
+    flexDirection: 'row', 
+    alignItems: 'center' 
+  },
 
-  rankPoints: { color: '#BDF8BD', fontSize: 16, fontWeight: 'bold' },
+  rankAvatar: { 
+    
+    marginRight: 30,
+    justifyContent: 'center',
+    alignItems: 'center', 
+  },
+
+  rankName: { 
+    color: '#FFF', 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
+
+  rankPoints: { 
+    color: '#BDF8BD', 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
 
   btnVoltar: {
     width: '80%',
