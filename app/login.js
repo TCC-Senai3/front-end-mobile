@@ -210,7 +210,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            <Link href="/Redefinicao-Senha" asChild>
+            <Link href="/Recuperacao-Email" asChild>
               <TouchableOpacity style={styles.forgotPasswordButton}>
                 <Text style={styles.forgotPasswordText}>
                   Esqueceu sua senha?

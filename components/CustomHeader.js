@@ -16,7 +16,6 @@ import { Feather } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 
 // --- Ícones Gerais ---
-import MedalhamenuIcon from '../components/icons/MedalhamenuIcon';
 import PerfilIcon from '../components/icons/PerfilIcon'; // Ícone padrão
 
 // --- Ícones de Avatar (Novos) ---
@@ -153,10 +152,10 @@ const CustomHeader = ({
         </View>
       )}
 
-      {/* --- MENU LATERAL (MODAL) --- */}
+    {/* --- MENU LATERAL (MODAL) --- */}
       <Modal
         animationType="fade"
-        transparent={true}
+        transpar  ent={true}
         visible={isMenuVisible}
         onRequestClose={() => setMenuVisible(false)}
       >
@@ -186,12 +185,12 @@ const CustomHeader = ({
                     </Text>
                   </View>
                   
-                  <View style={styles.scoreContainer}>
+                  {/* <View style={styles.scoreContainer}>
                     <MedalhamenuIcon style={styles.medalImage} />
                     <Text style={styles.pontuacao}>
                         {user?.pontuacao !== undefined ? user.pontuacao : 0}
                     </Text>
-                  </View>
+                  </View> */}
                 </View>
 
                 <View style={styles.menuItemsContainer}>
