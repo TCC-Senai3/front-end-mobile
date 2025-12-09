@@ -33,32 +33,41 @@ export default function RankingSection() {
   };
 
   useEffect(() => {
-    const loadRanking = async () => {
-      try {
-        const data = await getRankingGlobal();
+  let intervalId;
 
-        const enhancedData = data.map((item, index) => {
-          const avatarKey = (item.avatar || '').toLowerCase();
-          const AvatarComponent = avatarMap[avatarKey] || null;
+  const loadRanking = async () => {
+    try {
+      const data = await getRankingGlobal();
 
-          return {
-            id: item.idUsuario,
-            rank: index + 1,
-            name: item.nomeUsuario,
-            score: item.pontuacao,
-            avatar: AvatarComponent, // componente SVG correto
-          };
-        });
+      const enhancedData = data.map((item, index) => {
+        const avatarKey = (item.avatar || '').toLowerCase();
+        const AvatarComponent = avatarMap[avatarKey] || null;
 
-        setRankingData(enhancedData);
-        setFilteredData(enhancedData);
-      } catch (error) {
-        console.error('Erro ao carregar ranking:', error);
-      }
-    };
+        return {
+          id: item.idUsuario,
+          rank: index + 1,
+          name: item.nomeUsuario,
+          score: item.pontuacao,
+          avatar: AvatarComponent,
+        };
+      });
 
-    loadRanking();
-  }, []);
+      setRankingData(enhancedData);
+      setFilteredData(enhancedData);
+    } catch (error) {
+      console.error('Erro ao carregar ranking:', error);
+    }
+  };
+
+  // Carregar o ranking imediatamente
+  loadRanking();
+
+  // Atualizar automaticamente a cada 3 minutos (180000ms)
+  intervalId = setInterval(loadRanking, 180000);
+
+  // Limpar intervalo ao desmontar
+  return () => clearInterval(intervalId);
+}, []);
 
   const handleSearch = (text) => {
     setSearchText(text);

@@ -188,7 +188,7 @@ export default function FimDeJogo() {
         {/* BOTÃO VOLTAR */}
         <TouchableOpacity 
           style={styles.btnVoltar} 
-          onPress={() => router.replace('/home')}
+          onPress={() => router.replace('/jogo')}
         >
           <Text style={styles.btnText}>VOLTAR AO MENU</Text>
         </TouchableOpacity>

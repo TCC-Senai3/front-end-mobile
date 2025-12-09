@@ -1,57 +1,53 @@
-
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, StatusBar } from 'react-native';
-import { Link } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { ActivityIndicator, View, StyleSheet, StatusBar } from 'react-native';
+import * as Font from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { Stack } from 'expo-router';
+import HomeScreen from './home'; // seu arquivo HomeScreen
 
 export default function App() {
-  return (
-    <View style={styles.root}>
-      <StatusBar translucent={false} backgroundColor="#0D0D0D" barStyle="light-content" />
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>Bem-vindo ao Senai Skill Up!</Text>
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await SplashScreen.preventAutoHideAsync();
 
-        <Link href="/login" style={styles.link}>Login</Link>
-        <Link href="/cadastro" style={styles.link}>Cadastro</Link>
-        <Link href="/contato" style={styles.link}>Contato</Link>
-        <Link href="/suporte" style={styles.link}>Suporte</Link>
-        <Link href="/termos" style={styles.link}>Termos</Link>
-        <Link href="/jogo" style={styles.link}>Jogo</Link>
-        <Link href="/Recuperacao-Email" style={styles.link}>Recuperação de Email</Link>
-        <Link href="/Sem-Conexao" style={styles.link}>Sem Conexão</Link>
-        <Link href="/home" style={styles.link}>Home</Link>
-        <Link href="/perfil" style={styles.link}>Perfil</Link>
-        <Link href="/sala" style={styles.link}>Sala</Link>
-        <Link href="/game-pin" style={styles.link}>Game PIN</Link>
-        <Link href="/verified" style={styles.link}>Verificado</Link>
-        <Link href="/error" style={styles.link}>Erro</Link>
-        <Link href="/criar-sala" style={styles.link}>Criar Sala</Link>
-        <Link href="/partida" style={styles.link}>Partida</Link>
-        <Link href="/fim-de-jogo" style={styles.link}>Fim de Jogo</Link>
-      </ScrollView>
-    </View>
-  );
+        await Font.loadAsync({
+          'Blinker-Bold': require('../assets/fonts/Blinker/Blinker-Bold.ttf'),
+          'Poppins-Medium': require('../assets/fonts/Poppins/Poppins-Medium.ttf'),
+          'Poppins-Regular': require('../assets/fonts/Poppins/Poppins-Regular.ttf'),
+          'Poppins-SemiBold': require('../assets/fonts/Poppins/Poppins-SemiBold.ttf'),
+        });
+
+        setFontsLoaded(true);
+        await SplashScreen.hideAsync();
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    loadFonts();
+  }, []);
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <StatusBar translucent={false} backgroundColor="#00A9FF" barStyle="light-content" />
+        <ActivityIndicator size="large" color="#f50606" />
+      </View>
+    );
+  }
+
+  // Renderiza a HomeScreen diretamente como primeira tela
+  return <HomeScreen />;
 }
 
 const styles = StyleSheet.create({
-  root: {
+  loadingContainer: {
     flex: 1,
-    backgroundColor: '#0D0D0D', // cor de fundo global
-  },
-  scrollContainer: {
-    flexGrow: 1,
+    backgroundColor: '#00A9FF',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
-  },
-  title: {
-    color: '#fff',
-    fontSize: 24,
-    marginBottom: 20,
-  },
-  link: {
-    fontSize: 18,
-    color: '#f50606',
-    marginVertical: 10,
   },
 });

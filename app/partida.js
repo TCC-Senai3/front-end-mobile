@@ -126,7 +126,7 @@ export default function PartidaScreen() {
                   const pl = JSON.parse(msg.body);
                   if (pl.type === 'FIM_DE_JOGO' || pl.type === 'SALA_FECHADA') {
                     Alert.alert('Aviso', 'O jogo foi encerrado.');
-                    router.replace('/home');
+                    router.replace('/jogo');
                   }
                 } catch (e) {
                   // ignore parse error
@@ -142,7 +142,7 @@ export default function PartidaScreen() {
       } catch (error) {
         console.error('Erro fatal:', error);
         Alert.alert('Erro', error.message || 'Falha ao carregar partida.', [
-          { text: 'Sair', onPress: () => router.replace('/home') },
+          { text: 'Sair', onPress: () => router.replace('/jogo') },
         ]);
       }
     };
@@ -267,7 +267,7 @@ export default function PartidaScreen() {
   const handleExit = () => {
     Alert.alert('Sair', 'Deseja sair da partida?', [
       { text: 'Não' },
-      { text: 'Sim', onPress: () => router.replace('/home') },
+      { text: 'Sim', onPress: () => router.replace('/jogo') },
     ]);
   };
 
