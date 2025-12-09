@@ -18,7 +18,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 
 // --- ÍCONES GERAIS ---
-import { MedalhaIcon, Trofeu1Icon } from '../components/icons/icon';
+import { MedalhaIcon } from '../components/icons/icon';
 import Userprofile2Icon from '../components/icons/Userprofile2Icon';
 
 // --- ÍCONES DE AVATAR ---
@@ -40,10 +40,8 @@ export default function PerfilScreen() {
     id: null, 
     name: 'Carregando...',
     email: '',
-    rankPosition: '-',
     points: 0,
     bio: '',
-    tag: '',
     avatar: null
   });
 
@@ -76,10 +74,8 @@ export default function PerfilScreen() {
           id: userData.id,
           name: userData.nome || 'Usuário',
           email: userData.email || '', 
-          rankPosition: userData.ranking || '-', 
           points: userData.pontuacao || 0,
           bio: userData.biografia || 'Sem biografia...',
-          tag: `#${userData.id}`,
           avatar: userData.avatar
         });
         setBioDraft(userData.biografia || '');
@@ -128,7 +124,7 @@ export default function PerfilScreen() {
     }
   };
 
-  // --- ATUALIZAR AVATAR (AGORA USANDO O ID) ---
+  // --- ATUALIZAR AVATAR ---
   const handleSelectAvatar = async (avatarKey) => {
     setAvatarModalVisible(false);
     
@@ -140,7 +136,6 @@ export default function PerfilScreen() {
     setUpdating(true);
 
     try {
-      // Chama o endpoint correto: PUT /usuarios/{id}/avatar
       await usuarioService.atualizarAvatar(profile.id, avatarKey);
 
       setProfile(prev => ({ ...prev, avatar: avatarKey }));
@@ -191,14 +186,8 @@ export default function PerfilScreen() {
             <Text style={styles.email}>{profile.email}</Text>
           </View>
 
+          {/* SÓ PONTOS */}
           <View style={styles.gridRow}>
-            <View style={styles.gridCard}>
-              <View style={styles.gridHeader}>
-                <Trofeu1Icon style={styles.gridIcon} width={28} height={27} />
-                <Text style={styles.gridTitle}>POSIÇÃO NO RANKING</Text>
-              </View>
-              <Text style={styles.gridValue}>{profile.rankPosition}</Text>
-            </View>
             <View style={styles.gridCard}>
               <View style={styles.gridHeader}>
                 <MedalhaIcon style={styles.gridIcon} width={25} height={27} />
@@ -210,15 +199,8 @@ export default function PerfilScreen() {
             </View>
           </View>
 
+          {/* SÓ BIOGRAFIA */}
           <View style={styles.gridRow}>
-            <View style={styles.gridCardWide}>
-              <Text style={styles.sectionLabel}>TAG#</Text>
-              <View style={styles.tagRow}>
-                <Trofeu1Icon width={30} height={30} style={{ marginRight: 8, resizeMode: 'contain' }} />
-                <Text style={styles.tagText}>{profile.tag}</Text>
-              </View>
-            </View>
-            
             <View style={styles.gridCardWide}>
               <Text style={styles.sectionLabel}>BIOGRAFIA</Text>
               {editingBio ? (
@@ -282,7 +264,7 @@ export default function PerfilScreen() {
                   ]}
                   onPress={() => handleSelectAvatar(item.key)}
                 >
-                  <item.Component width={70} height={70} />
+                  <item.Component width={50} height={50} />
                   <Text style={styles.avatarLabel}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
@@ -303,12 +285,13 @@ const TILE_BG = '#D9D9D9';
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: PAGE_BG },
-  container: { padding: 16 },
+  container: { padding: 25 },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 12,
+    marginTop: 25,
   },
   badgeText: { color: '#FFFFFF', fontFamily: 'Poppins-SemiBold', fontSize: 16 },
   closeIcon: { color: '#FFF', fontSize: 32, padding: 4 },
@@ -318,45 +301,29 @@ const styles = StyleSheet.create({
     backgroundColor: CARD_BG,
     borderRadius: 14,
     padding: 16,
-    minHeight: 520,
+    minHeight: 450, // Ajustado pois removemos itens
   },
   avatarWrapper: { alignItems: 'center', marginTop: 8 },
-  avatarContainer: { position: 'relative' },
-  avatarCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#F0F0F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusDot: {
-    position: 'absolute',
-    right: 6,
-    bottom: 6,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#2CC84D',
-    borderWidth: 2,
-    borderColor: '#FFF',
-  },
+  avatarContainer: { marginTop: -10, marginBottom: -40, marginLeft: 50 },
+ 
+  
   changeAvatarButton: {
-    position: 'absolute',
     bottom: 0,
     right: 0,
     backgroundColor: '#00A9FF',
-    width: 32,
-    height: 32,
+    width: 25,
+    height: 25,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#FFF',
     elevation: 3,
+    marginTop: -40, 
+    marginLeft: 12,
   },
 
-  name: { marginTop: 10, fontFamily: 'Poppins-SemiBold', fontSize: 16, color: TEXT_DARK },
+  name: { marginTop: 50, fontFamily: 'Poppins-SemiBold', fontSize: 16, color: TEXT_DARK },
   email: { marginTop: 2, fontFamily: 'Poppins-Regular', fontSize: 12, color: TEXT_MUTED },
 
   gridRow: { flexDirection: 'row', gap: 12, marginTop: 18 },
@@ -381,8 +348,6 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   sectionLabel: { fontFamily: 'Poppins-Medium', fontSize: 12, color: TEXT_MUTED, marginBottom: 8 },
-  tagRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  tagText: { fontFamily: 'Poppins-SemiBold', color: TEXT_DARK },
   
   bioText: { fontFamily: 'Poppins-Regular', color: TEXT_DARK, textAlign: 'left', lineHeight: 20 },
   bioInput: { 
@@ -435,12 +400,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Poppins-SemiBold',
     color: '#333',
+    
   },
   avatarsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-around',
     gap: 15,
+    
+    
   },
   avatarOption: {
     alignItems: 'center',
@@ -457,5 +425,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontFamily: 'Poppins-Medium',
     color: '#333',
+    
   }
 });

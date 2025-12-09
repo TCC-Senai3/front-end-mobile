@@ -17,7 +17,6 @@ export default function App() {
         <Link href="/suporte" style={styles.link}>Suporte</Link>
         <Link href="/termos" style={styles.link}>Termos</Link>
         <Link href="/jogo" style={styles.link}>Jogo</Link>
-        <Link href="/Redefinicao-Senha" style={styles.link}>Nova Senha</Link>
         <Link href="/Recuperacao-Email" style={styles.link}>Recuperação de Email</Link>
         <Link href="/Sem-Conexao" style={styles.link}>Sem Conexão</Link>
         <Link href="/home" style={styles.link}>Home</Link>
@@ -26,12 +25,9 @@ export default function App() {
         <Link href="/game-pin" style={styles.link}>Game PIN</Link>
         <Link href="/verified" style={styles.link}>Verificado</Link>
         <Link href="/error" style={styles.link}>Erro</Link>
-        <Link href="/aguardando" style={styles.link}>Aguardando</Link>
         <Link href="/criar-sala" style={styles.link}>Criar Sala</Link>
         <Link href="/partida" style={styles.link}>Partida</Link>
         <Link href="/fim-de-jogo" style={styles.link}>Fim de Jogo</Link>
-        <Link href="/recompensa" style={styles.link}>Recompensa</Link>
-        <Link href="/buscar" style={styles.link}>Buscar</Link>
       </ScrollView>
     </View>
   );
